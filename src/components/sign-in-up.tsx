@@ -129,7 +129,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   ))
                 : (title ?? (
                     <span className="font-light text-foreground tracking-tighter">
-                      Welcome to jungle
+                      Get back to jungle ?
                     </span>
                   ))}
             </h1>
