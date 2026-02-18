@@ -39,7 +39,7 @@ const SignInPageDemo = () => {
   return (
     <div className="bg-background text-foreground overflow-x-hidden">
       <AuthPage
-        heroImageSrc="public/dummyhero.jpg"
+        heroImageSrc="public/assets/dummyhero.jpg"
         onSignIn={handleSignIn}
         onSignUp={handleSignUp}
         onGoogleSignIn={handleGoogleSignIn}
