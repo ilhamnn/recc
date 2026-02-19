@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
 
-// --- HELPER COMPONENTS (ICONS) ---
-
 const GoogleIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -91,10 +89,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       {/* Left column */}
       <section className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
         <div className="w-full max-w-md py-8 ">
-          {/* Logo */}
           <img className="w-45 mb-4 " src="assets/logo.png" alt="logo" />
-
-          {/* Toggle tabs */}
           <div className="flex gap-1 bg-foreground/5 border border-border rounded-2xl p-1 mb-1 ">
             <button
               onClick={() => setMode("signin")}
@@ -147,7 +142,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <GlassInputWrapper>
                   <input
                     name="email"
-                    type="email"
+                    type="text"
                     placeholder="email or username"
                     className={inputClass}
                   />
