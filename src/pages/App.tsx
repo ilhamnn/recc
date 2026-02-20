@@ -13,7 +13,7 @@
 // }
 
 import { Routes, Route } from "react-router-dom";
-import SignInPageDemo from "@/pages/welcome";
+import SignInPageDemo from "@/pages/Welcome";
 import Landing from "@/pages/Landing";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Fot } from "@/components/ui/footer";

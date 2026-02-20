@@ -9,12 +9,20 @@ import {
 } from "@/components/ui/navBase/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { MenuToggle } from "@/components/ui/navBase/menu-toggle";
+import { ChevronDown } from "lucide-react";
 
 export function SimpleHeader() {
   const [open, setOpen] = React.useState(false);
+  const [expandedSection, setExpandedSection] = React.useState<string | null>(
+    null,
+  );
 
   const roleItems = ["giver", "recipient"];
   const idItems = ["eng", "中国", "ID"];
+
+  const toggleSection = (section: string) => {
+    setExpandedSection((prev) => (prev === section ? null : section));
+  };
 
   return (
     <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-1/4 z-50 w-full border-b backdrop-blur-lg">
@@ -24,6 +32,7 @@ export function SimpleHeader() {
           <p className="text-lg font-black tracking-tight">serba</p>
         </div>
 
+        {/* Desktop nav */}
         <div className="hidden items-center gap-2 lg:flex">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
@@ -72,6 +81,7 @@ export function SimpleHeader() {
           </a>
         </div>
 
+        {/* Mobile sheet */}
         <Sheet open={open} onOpenChange={setOpen}>
           <Button size="icon" variant="outline" className="lg:hidden">
             <MenuToggle
@@ -87,13 +97,33 @@ export function SimpleHeader() {
             showClose={false}
             className="bg-background/95 supports-backdrop-filter:bg-background/80 gap-0 backdrop-blur-lg"
           >
-            <div className="grid gap-y-2 overflow-y-auto px-4 pt-12 pb-5">
-              <p className="px-3 text-sm font-semibold">Role pick</p>
-              {roleItems.map((item) => (
-                <Button key={item} variant="ghost" className="justify-start">
-                  {item}
-                </Button>
-              ))}
+            <div className="grid gap-y-1 overflow-y-auto px-4 pt-12 pb-5">
+              {/* Role pick accordion */}
+              <Button
+                variant="ghost"
+                className="justify-between"
+                onClick={() => toggleSection("role")}
+              >
+                Role pick
+                <ChevronDown
+                  className={`size-4 transition-transform duration-200 ${
+                    expandedSection === "role" ? "rotate-180" : ""
+                  }`}
+                />
+              </Button>
+              {expandedSection === "role" && (
+                <div className="ml-3 grid gap-y-1 border-l pl-3">
+                  {roleItems.map((item) => (
+                    <Button
+                      key={item}
+                      variant="ghost"
+                      className="justify-start text-muted-foreground"
+                    >
+                      {item}
+                    </Button>
+                  ))}
+                </div>
+              )}
 
               <a
                 className={buttonVariants({
@@ -105,12 +135,32 @@ export function SimpleHeader() {
                 Notif
               </a>
 
-              <p className="px-3 text-sm font-semibold">ID</p>
-              {idItems.map((item) => (
-                <Button key={item} variant="ghost" className="justify-start">
-                  {item}
-                </Button>
-              ))}
+              {/* ID accordion */}
+              <Button
+                variant="ghost"
+                className="justify-between"
+                onClick={() => toggleSection("id")}
+              >
+                ID
+                <ChevronDown
+                  className={`size-4 transition-transform duration-200 ${
+                    expandedSection === "id" ? "rotate-180" : ""
+                  }`}
+                />
+              </Button>
+              {expandedSection === "id" && (
+                <div className="ml-3 grid gap-y-1 border-l pl-3">
+                  {idItems.map((item) => (
+                    <Button
+                      key={item}
+                      variant="ghost"
+                      className="justify-start text-muted-foreground"
+                    >
+                      {item}
+                    </Button>
+                  ))}
+                </div>
+              )}
 
               <a
                 className={buttonVariants({
@@ -124,7 +174,6 @@ export function SimpleHeader() {
             </div>
 
             <SheetFooter>
-              <Button variant="outline">Sign In</Button>
               <Button>Get Started</Button>
             </SheetFooter>
           </SheetContent>
