@@ -113,7 +113,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             </button>
           </div>
 
-          {/* Heading */}
+          {/* Headisdasdasdasdng */}
           <div className="mb-2 ">
             <h1 className="text-4xl md:text-4xl font-bold leading-tight mb-2 mt-2">
               {isSignUp
