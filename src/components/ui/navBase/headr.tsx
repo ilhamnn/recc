@@ -16,9 +16,11 @@ export function SimpleHeader() {
   const [expandedSection, setExpandedSection] = React.useState<string | null>(
     null,
   );
+  const [selectedperan, setSelectedperan] = React.useState<string | null>(null);
+  const [selectedLang, setSelectedLang] = React.useState<string | null>(null);
 
-  const roleItems = ["giver", "recipient"];
-  const idItems = ["eng", "中国", "ID"];
+  const peranItems = ["pemberi", "penerima"];
+  const idItems = ["eng", "中国", "id"];
 
   const toggleSection = (section: string) => {
     setExpandedSection((prev) => (prev === section ? null : section));
@@ -36,15 +38,16 @@ export function SimpleHeader() {
         <div className="hidden items-center gap-2 lg:flex">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <Button variant="ghost">Role pick</Button>
+              <Button variant="ghost">{selectedperan ?? "peran"}</Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content
               align="start"
               className="z-50 min-w-40 rounded-md border bg-background p-1 shadow-md"
             >
-              {roleItems.map((item) => (
+              {peranItems.map((item) => (
                 <DropdownMenu.Item
                   key={item}
+                  onSelect={() => setSelectedperan(item)}
                   className="cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent"
                 >
                   {item}
@@ -54,12 +57,12 @@ export function SimpleHeader() {
           </DropdownMenu.Root>
 
           <a className={buttonVariants({ variant: "ghost" })} href="#">
-            Notif
+            notif
           </a>
 
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <Button variant="ghost">ID</Button>
+              <Button variant="ghost">{selectedLang ?? "id"}</Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content
               align="start"
@@ -68,6 +71,7 @@ export function SimpleHeader() {
               {idItems.map((item) => (
                 <DropdownMenu.Item
                   key={item}
+                  onSelect={() => setSelectedLang(item)}
                   className="cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent"
                 >
                   {item}
@@ -77,7 +81,7 @@ export function SimpleHeader() {
           </DropdownMenu.Root>
 
           <a className={buttonVariants({ variant: "ghost" })} href="#">
-            Bantuan
+            bantuan
           </a>
         </div>
 
@@ -98,25 +102,25 @@ export function SimpleHeader() {
             className="bg-background/95 supports-backdrop-filter:bg-background/80 gap-0 backdrop-blur-lg"
           >
             <div className="grid gap-y-1 overflow-y-auto px-4 pt-12 pb-5">
-              {/* Role pick accordion */}
               <Button
                 variant="ghost"
                 className="justify-between"
-                onClick={() => toggleSection("role")}
+                onClick={() => toggleSection("peran")}
               >
-                Role pick
+                {selectedperan ?? "peran"}
                 <ChevronDown
                   className={`size-4 transition-transform duration-200 ${
-                    expandedSection === "role" ? "rotate-180" : ""
+                    expandedSection === "peran" ? "rotate-180" : ""
                   }`}
                 />
               </Button>
-              {expandedSection === "role" && (
+              {expandedSection === "peran" && (
                 <div className="ml-3 grid gap-y-1 border-l pl-3">
-                  {roleItems.map((item) => (
+                  {peranItems.map((item) => (
                     <Button
                       key={item}
                       variant="ghost"
+                      onClick={() => setSelectedperan(item)}
                       className="justify-start text-muted-foreground"
                     >
                       {item}
@@ -132,16 +136,15 @@ export function SimpleHeader() {
                 })}
                 href="#"
               >
-                Notif
+                notif
               </a>
 
-              {/* ID accordion */}
               <Button
                 variant="ghost"
                 className="justify-between"
                 onClick={() => toggleSection("id")}
               >
-                ID
+                {selectedLang ?? "peran"}
                 <ChevronDown
                   className={`size-4 transition-transform duration-200 ${
                     expandedSection === "id" ? "rotate-180" : ""
@@ -154,6 +157,7 @@ export function SimpleHeader() {
                     <Button
                       key={item}
                       variant="ghost"
+                      onClick={() => setSelectedLang(item)}
                       className="justify-start text-muted-foreground"
                     >
                       {item}
@@ -169,12 +173,12 @@ export function SimpleHeader() {
                 })}
                 href="#"
               >
-                Bantuan
+                bantuan
               </a>
             </div>
 
             <SheetFooter>
-              <Button>Get Started</Button>
+              <Button>Mulai</Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
