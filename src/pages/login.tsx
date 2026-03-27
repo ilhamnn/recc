@@ -2,13 +2,6 @@ import { AuthPage } from "@/components/sign-in-up";
 import { useNavigate } from "react-router-dom";
 
 const SignInPageDemo = () => {
-  // const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-  //   const formData = new FormData(event.currentTarget);
-  //   const data = Object.fromEntries(formData.entries());
-  //   console.log("Sign In submitted:", data);
-  //   alert(`Sign In Submitted! Check the browser console for form data.`);
-  // };
   const DUMMY_USER = {
     username: "a",
     password: "1",

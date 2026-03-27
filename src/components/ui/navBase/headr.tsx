@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   Sheet,
@@ -12,6 +13,7 @@ import { MenuToggle } from "@/components/ui/navBase/menu-toggle";
 import { ChevronDown } from "lucide-react";
 
 export function SimpleHeader() {
+  const navigate = useNavigate();
   const [open, setOpen] = React.useState(false);
   const [expandedSection, setExpandedSection] = React.useState<string | null>(
     null,
@@ -47,7 +49,10 @@ export function SimpleHeader() {
               {peranItems.map((item) => (
                 <DropdownMenu.Item
                   key={item}
-                  onSelect={() => setSelectedperan(item)}
+                  onSelect={() => {
+                    setSelectedperan(item);
+                    navigate("/login");
+                  }}
                   className="cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent"
                 >
                   {item}
