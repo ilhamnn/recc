@@ -3,8 +3,6 @@ import { useNavigate, Navigate } from "react-router-dom";
 
 const SignInPageDemo = () => {
   const navigate = useNavigate();
-
-  // ✅ Jika sudah login, langsung redirect
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
   if (isLoggedIn) return <Navigate to="/r" replace />;
 
@@ -27,7 +25,6 @@ const SignInPageDemo = () => {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
     console.log("Sign Up submitted:", data);
-    // Setelah sign up sukses, bisa set login & redirect
     localStorage.setItem("isLoggedIn", "true");
     navigate("/r", { replace: true });
   };

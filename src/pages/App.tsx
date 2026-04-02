@@ -10,12 +10,10 @@ export default function App() {
   return (
     <>
       <Routes>
-        {/* Public routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<SignInPageDemo />} />
 
-        {/* Protected routes — wajib login */}
-        <Route element={<ProtectedRoute children={undefined} />}>
+        <Route element={<ProtectedRoute />}>
           <Route path="/r" element={<Penerima />} />
           <Route path="/g" element={<Pemberi />} />
         </Route>
