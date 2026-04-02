@@ -1,25 +1,24 @@
 import { AuthPage } from "@/components/sign-in-up";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 
 const SignInPageDemo = () => {
-  const DUMMY_USER = {
-    username: "a",
-    password: "1",
-  };
-
   const navigate = useNavigate();
+
+  // ✅ Jika sudah login, langsung redirect
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  if (isLoggedIn) return <Navigate to="/r" replace />;
+
+  const DUMMY_USER = { username: "a", password: "1" };
 
   const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const formData = new FormData(event.currentTarget);
     const username = formData.get("email");
     const password = formData.get("password");
 
     if (username === DUMMY_USER.username && password === DUMMY_USER.password) {
       localStorage.setItem("isLoggedIn", "true");
-
-      navigate("/landing", { replace: true });
+      navigate("/r", { replace: true });
     }
   };
 
@@ -28,25 +27,9 @@ const SignInPageDemo = () => {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
     console.log("Sign Up submitted:", data);
-    alert(`Sign Up Submitted! Check the browser console for form data.`);
-  };
-
-  const handleGoogleSignIn = () => {
-    console.log("Continue with Google clicked");
-    alert("Continue with Google clicked");
-  };
-
-  const handleGoogleSignUp = () => {
-    console.log("Sign up with Google clicked");
-    alert("Sign up with Google clicked");
-  };
-
-  const handleResetPassword = () => {
-    alert("Reset Password clicked");
-  };
-
-  const handleCreateAccount = () => {
-    console.log("Create Account clicked");
+    // Setelah sign up sukses, bisa set login & redirect
+    localStorage.setItem("isLoggedIn", "true");
+    navigate("/r", { replace: true });
   };
 
   return (
@@ -55,10 +38,10 @@ const SignInPageDemo = () => {
         heroImageSrc="assets/dummyhero.jpg"
         onSignIn={handleSignIn}
         onSignUp={handleSignUp}
-        onGoogleSignIn={handleGoogleSignIn}
-        onGoogleSignUp={handleGoogleSignUp}
-        onResetPassword={handleResetPassword}
-        onCreateAccount={handleCreateAccount}
+        onGoogleSignIn={() => alert("Google Sign In")}
+        onGoogleSignUp={() => alert("Google Sign Up")}
+        onResetPassword={() => alert("Reset Password")}
+        onCreateAccount={() => {}}
       />
     </div>
   );

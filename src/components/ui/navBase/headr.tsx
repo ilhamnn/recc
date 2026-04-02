@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/navBase/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { MenuToggle } from "@/components/ui/navBase/menu-toggle";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 
 export function SimpleHeader() {
   const navigate = useNavigate();
@@ -21,6 +21,9 @@ export function SimpleHeader() {
   const [selectedperan, setSelectedperan] = React.useState<string | null>(null);
   const [selectedLang, setSelectedLang] = React.useState<string | null>(null);
 
+  // ✅ Cek status login
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
   const peranItems = ["pemberi", "penerima"];
   const idItems = ["eng", "中国", "id"];
 
@@ -28,10 +31,28 @@ export function SimpleHeader() {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    navigate("/login", { replace: true });
+  };
+
+  const handlePeranSelect = (item: string) => {
+    setSelectedperan(item);
+    if (!isLoggedIn) {
+      navigate("/login");
+    } else {
+      // arahkan sesuai peran
+      navigate(item === "pemberi" ? "/r" : "/g");
+    }
+  };
+
   return (
-    <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-1/4 z-50 w-full border-b backdrop-blur-lg">
+    <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-lg">
       <nav className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between px-4">
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
           <img src="/Untitled-1j.png" alt="logo" width={32} height={32} />
           <p className="text-lg font-black tracking-tight">serba</p>
         </div>
@@ -40,7 +61,10 @@ export function SimpleHeader() {
         <div className="hidden items-center gap-2 lg:flex">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <Button variant="ghost">{selectedperan ?? "peran"}</Button>
+              <Button variant="ghost">
+                {selectedperan ?? "peran"}
+                <ChevronDown className="ml-1 size-4" />
+              </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content
               align="start"
@@ -49,10 +73,7 @@ export function SimpleHeader() {
               {peranItems.map((item) => (
                 <DropdownMenu.Item
                   key={item}
-                  onSelect={() => {
-                    setSelectedperan(item);
-                    navigate("/login");
-                  }}
+                  onSelect={() => handlePeranSelect(item)}
                   className="cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent"
                 >
                   {item}
@@ -61,9 +82,12 @@ export function SimpleHeader() {
             </DropdownMenu.Content>
           </DropdownMenu.Root>
 
-          <a className={buttonVariants({ variant: "ghost" })} href="#">
-            notif
-          </a>
+          {/* Notif hanya muncul jika sudah login */}
+          {isLoggedIn && (
+            <a className={buttonVariants({ variant: "ghost" })} href="#">
+              notif
+            </a>
+          )}
 
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
@@ -88,6 +112,18 @@ export function SimpleHeader() {
           <a className={buttonVariants({ variant: "ghost" })} href="#">
             bantuan
           </a>
+
+          {/* ✅ Login / Logout button */}
+          {isLoggedIn ? (
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="mr-2 size-4" />
+              Keluar
+            </Button>
+          ) : (
+            <Button size="sm" onClick={() => navigate("/login")}>
+              Masuk
+            </Button>
+          )}
         </div>
 
         {/* Mobile sheet */}
@@ -125,7 +161,10 @@ export function SimpleHeader() {
                     <Button
                       key={item}
                       variant="ghost"
-                      onClick={() => setSelectedperan(item)}
+                      onClick={() => {
+                        setOpen(false);
+                        handlePeranSelect(item);
+                      }}
                       className="justify-start text-muted-foreground"
                     >
                       {item}
@@ -134,22 +173,24 @@ export function SimpleHeader() {
                 </div>
               )}
 
-              <a
-                className={buttonVariants({
-                  variant: "ghost",
-                  className: "justify-start",
-                })}
-                href="#"
-              >
-                notif
-              </a>
+              {isLoggedIn && (
+                <a
+                  className={buttonVariants({
+                    variant: "ghost",
+                    className: "justify-start",
+                  })}
+                  href="#"
+                >
+                  notif
+                </a>
+              )}
 
               <Button
                 variant="ghost"
                 className="justify-between"
                 onClick={() => toggleSection("id")}
               >
-                {selectedLang ?? "peran"}
+                {selectedLang ?? "id"}
                 <ChevronDown
                   className={`size-4 transition-transform duration-200 ${
                     expandedSection === "id" ? "rotate-180" : ""
@@ -170,7 +211,6 @@ export function SimpleHeader() {
                   ))}
                 </div>
               )}
-
               <a
                 className={buttonVariants({
                   variant: "ghost",
@@ -183,7 +223,21 @@ export function SimpleHeader() {
             </div>
 
             <SheetFooter>
-              <Button>Mulai</Button>
+              {isLoggedIn ? (
+                <Button variant="outline" onClick={handleLogout}>
+                  <LogOut className="mr-2 size-4" />
+                  Keluar
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    setOpen(false);
+                    navigate("/login");
+                  }}
+                >
+                  Masuk / Daftar
+                </Button>
+              )}
             </SheetFooter>
           </SheetContent>
         </Sheet>
