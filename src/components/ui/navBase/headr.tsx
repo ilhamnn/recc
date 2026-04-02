@@ -21,7 +21,6 @@ export function SimpleHeader() {
   const [selectedperan, setSelectedperan] = React.useState<string | null>(null);
   const [selectedLang, setSelectedLang] = React.useState<string | null>(null);
 
-  // ✅ Cek status login
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
   const peranItems = ["pemberi", "penerima"];
@@ -113,7 +112,6 @@ export function SimpleHeader() {
             bantuan
           </a>
 
-          {/* ✅ Login / Logout button */}
           {isLoggedIn ? (
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="mr-2 size-4" />

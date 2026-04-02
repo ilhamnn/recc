@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Landing from "@/pages/Landing";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Fot } from "@/components/ui/footer";
-import SignInPageDemo from "@/pages/Login";
+import SignInPageDemo from "@/pages/Gate";
 import Penerima from "@/pages/Penerima";
 import Pemberi from "./Pemberi";
 
@@ -11,7 +11,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<SignInPageDemo />} />
+        <Route path="/Login" element={<SignInPageDemo />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/r" element={<Penerima />} />
