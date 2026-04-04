@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Search, Heart, User } from "lucide-react";
+import { Heart, User } from "lucide-react";
+import Sidepenerima from "@/features/auth/components/sidebarpen";
 
 const jobs = Array(9).fill({
   title: "Kitchen Staff coffe shop",
@@ -27,9 +28,9 @@ export default function GiverContent() {
 
   return (
     <div className="min-h-screen bg-[#f5f2ec]">
-      {/* Hero search bar */}
-      <div className="bg-[#16A34A] px-6 pt-6 pb-8">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-4">
+      {/* Hero */}
+      <div className="bg-[#16A34A] px-4 sm:px-6 pt-6 pb-8">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-white text-xs mb-1.5 font-medium">
               Gawe yang dicari
@@ -67,25 +68,27 @@ export default function GiverContent() {
       </div>
 
       {/* Breadcrumb */}
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-2">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-4 pb-2">
         <p className="text-xs text-[#9a9688]">home &gt; giver</p>
       </div>
 
-      {/* Job grid */}
-      <div className="max-w-4xl mx-auto px-4 pb-10">
-        <div className="grid grid-cols-3 gap-4">
+      {/* Job Grid */}
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 pb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {jobsWithApplicant.map((job, i) => (
             <div
               key={i}
-              className="bg-white rounded-xl border border-[#e2ddd6] p-4 flex flex-col gap-2"
+              className="bg-white rounded-xl border border-[#e2ddd6] p-4 flex flex-col gap-2 hover:shadow-sm transition"
             >
-              {/* Top row */}
+              {/* Top */}
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-sm font-bold text-[#2d2d25] leading-snug">
+                  <h2 className="text-sm sm:text-base font-bold text-[#2d2d25] leading-snug">
                     {job.title}
                   </h2>
-                  <p className="text-xs text-[#9a9688]">{job.company}</p>
+                  <p className="text-xs sm:text-sm text-[#9a9688]">
+                    {job.company}
+                  </p>
                 </div>
                 {job.onsite && (
                   <span className="text-xs text-[#5a5a4e] whitespace-nowrap ml-2 mt-0.5">
@@ -95,7 +98,7 @@ export default function GiverContent() {
               </div>
 
               {/* Tags */}
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 mt-1">
                 {job.tags.map((tag: string) => (
                   <span
                     key={tag}
@@ -108,14 +111,14 @@ export default function GiverContent() {
 
               {/* Location */}
               <div>
-                <p className="text-xs font-semibold text-[#2d2d25]">
+                <p className="text-xs sm:text-sm font-semibold text-[#2d2d25]">
                   {job.location}
                 </p>
                 <p className="text-xs text-[#9a9688]">{job.distance}</p>
               </div>
 
               {/* Pay */}
-              <p className="text-xs text-[#5a5a4e]">{job.pay}</p>
+              <p className="text-xs sm:text-sm text-[#5a5a4e]">{job.pay}</p>
 
               {/* Tasks */}
               <ul className="space-y-0.5">
