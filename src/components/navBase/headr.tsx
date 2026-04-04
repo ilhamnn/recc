@@ -3,13 +3,9 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-} from "@/components/ui/navBase/sheet";
+import { Sheet, SheetContent, SheetFooter } from "@/components/navBase/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MenuToggle } from "@/components/ui/navBase/menu-toggle";
+import { MenuToggle } from "@/components/navBase/menu-toggle";
 import { ChevronDown, LogOut } from "lucide-react";
 
 export function SimpleHeader() {
