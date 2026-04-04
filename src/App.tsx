@@ -2,9 +2,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Landing from "@/pages/Landing";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Fot } from "@/components/ui/footer";
-import SignInPageDemo from "@/pages/Gate";
-import Penerima from "@/pages/Penerima";
-import Pemberi from "./Pemberi";
+import SignInPageDemo from "@/features/auth/pages/Gate";
+import Penerima from "@/features/auth/pages/Penerima";
+import Pemberi from "@/features/auth/pages/Pemberi";
 
 export default function App() {
   return (
