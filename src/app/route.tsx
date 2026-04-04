@@ -6,17 +6,28 @@ import LoginPage from "@/features/auth/pages/Gate";
 import PenerimaPage from "@/features/auth/pages/Penerima";
 import PemberiPage from "@/features/auth/pages/Pemberi";
 
+import MainLayout from "./layouts/MainLAy";
+import AuthLayout from "./layouts/AuthLAy";
+
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-
-      <Route element={<ProtectedRoute />}>
-        <Route path="/r" element={<PenerimaPage />} />
-        <Route path="/g" element={<PemberiPage />} />
+      {/* AUTH (tanpa navbar) */}
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<LoginPage />} />
       </Route>
 
+      {/* MAIN (dengan navbar) */}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<LandingPage />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/r" element={<PenerimaPage />} />
+          <Route path="/g" element={<PemberiPage />} />
+        </Route>
+      </Route>
+
+      {/* fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
