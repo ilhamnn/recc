@@ -86,7 +86,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
   return (
     <div className="min-h-dvh flex flex-col md:flex-row font-geist w-dvw overflow-hidden">
-      {/* Left column */}
       <section className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
         <div className="w-full max-w-md py-8 ">
           <img className="w-45 mb-4 " src="assets/logo.png" alt="logo" />

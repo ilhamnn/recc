@@ -1,4 +1,4 @@
-import { AuthPage } from "@/components/sign-in-up";
+import { AuthPage } from "@/features/auth/pages/sign-in-up";
 import { useNavigate, Navigate } from "react-router-dom";
 
 const SignInPageDemo = () => {
