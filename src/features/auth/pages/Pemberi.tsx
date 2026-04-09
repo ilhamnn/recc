@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Heart, User } from "lucide-react";
-import Sidepenerima from "@/features/auth/components/sidebarpen";
 
 const jobs = Array(9).fill({
   title: "Kitchen Staff coffe shop",

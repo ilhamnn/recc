@@ -63,27 +63,6 @@ export function Landing() {
               <Search className="h-4 w-4" />
             </button>
           </div>
-
-          <div className="mt-5 flex flex-wrap gap-2">
-            {["plumbing", "design", "computer"].map((item) => (
-              <button
-                key={item}
-                className="
-                  rounded-full
-                  border
-                  border-white/70
-                  px-4
-                  py-2
-                  text-xs
-                  sm:text-sm
-                  text-white
-                  hover:bg-white/10
-                "
-              >
-                {item} →
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     </div>
