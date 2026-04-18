@@ -11,7 +11,8 @@ export const useAuth = () => {
     try {
       return await authService.signIn(usernamOrEmail, password);
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Login gagal";
+      const data = err.response?.data;
+      const msg = data?.errors || data?.message || "Login gagal";
       setError(msg);
       throw new Error(msg);
     } finally {
@@ -23,9 +24,10 @@ export const useAuth = () => {
     setError(null);
     setLoading(true);
     try {
-      return await authService.signUp(payload);
+      return await authService.signUp(payload as Parameters<typeof authService.signUp>[0]);
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Register gagal";
+      const data = err.response?.data;
+      const msg = data?.errors || data?.message || "Register gagal";
       setError(msg);
       throw new Error(msg);
     } finally {
@@ -33,5 +35,9 @@ export const useAuth = () => {
     }
   };
 
-  return { login, register, loading, error };
+  const logout = async () => {
+    await authService.logout();
+  };
+
+  return { login, register, logout, loading, error };
 };

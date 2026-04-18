@@ -28,16 +28,40 @@ const GoogleIcon = () => (
 
 // --- PROPS ---
 
+interface FieldErrors {
+  firstname?: string;
+  lastname?: string;
+  username?: string;
+  email?: string;
+  password?: string;
+  phone?: string;
+  birthDate?: string;
+}
+
+type ResetStep = "request" | "otp" | "set-password";
+
 interface AuthPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
   heroImageSrc?: string;
-  onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
-  onSignUp?: (event: React.FormEvent<HTMLFormElement>) => void;
+  signInError?: string;
+  signUpError?: string;
+  signUpSuccess?: string;
+  onSignIn?: (
+    event: React.FormEvent<HTMLFormElement>,
+    setFieldError: (field: string, msg: string) => void,
+  ) => void;
+  onSignUp?: (
+    event: React.FormEvent<HTMLFormElement>,
+    setFieldError: (field: string, msg: string) => void,
+    setServerError: (msg: string) => void,
+  ) => void;
   onGoogleSignIn?: () => void;
   onGoogleSignUp?: () => void;
-  onResetPassword?: () => void;
-  onCreateAccount?: () => void;
+  onResetPassword?: (email: string) => void;
+  onVerifyOtp?: (email: string, otp: string) => void;
+  onSetNewPassword?: (email: string, otp: string, newPassword: string) => void;
+  onResetPasswordLink?: (email: string) => void;
 }
 
 // --- SUB-COMPONENTS ---
@@ -72,17 +96,177 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   title,
   description,
   heroImageSrc,
+  signInError,
+  signUpError,
+  signUpSuccess,
   onSignIn,
   onSignUp,
+  onResetPassword,
+  onVerifyOtp,
+  onSetNewPassword,
   onGoogleSignIn,
   onGoogleSignUp,
-  onResetPassword,
+  onResetPasswordLink,
 }) => {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [showPassword, setShowPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [serverError, setServerError] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetOtp, setResetOtp] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState("");
+  const [signupWarning, setSignupWarning] = useState(false);
 
   const isSignUp = mode === "signup";
+  const isReset = mode === "reset";
+
+  const setFieldError = (field: string, msg: string) => {
+    setFieldErrors((prev) => ({ ...prev, [field]: msg }));
+  };
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const clearAllErrors = () => {
+    setFieldErrors({});
+    setServerError("");
+  };
+
+  const handleModeSwitch = (newMode: "signin" | "signup") => {
+    clearAllErrors();
+    setSignupWarning(false);
+    setMode(newMode);
+  };
+
+  const fieldErrorClass = (field: string) =>
+    fieldErrors[field] ? "border-red-500" : "";
+
+  // Validation helpers
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+  const isValidPassword = (v: string) =>
+    v.length >= 8 &&
+    /[A-Z]/.test(v) &&
+    /[a-z]/.test(v) &&
+    /[0-9]/.test(v) &&
+    /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v);
+
+  const isValidPhone = (v: string) => /^(\+62|62|0)[0-9]{9,13}$/.test(v);
+
+  const isValidBirthDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+  const handleSignInSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    clearAllErrors();
+    const fd = new FormData(e.currentTarget);
+    const email = (fd.get("email") as string)?.trim();
+    const password = (fd.get("password") as string) || "";
+    let hasError = false;
+
+    if (!email) {
+      setFieldError("email", "Email atau username wajib diisi");
+      hasError = true;
+    }
+    if (!password) {
+      setFieldError("password", "Password wajib diisi");
+      hasError = true;
+    }
+
+    if (!hasError && onSignIn) {
+      onSignIn(e, setFieldError);
+    } else {
+      e.preventDefault();
+    }
+  };
+
+  const handleSignUpSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    clearAllErrors();
+    setSignupWarning(false);
+    const fd = new FormData(e.currentTarget);
+    const firstname = (fd.get("firstname") as string)?.trim();
+    const lastname = (fd.get("lastname") as string)?.trim();
+    const username = (fd.get("username") as string)?.trim();
+    const email = (fd.get("email") as string)?.trim();
+    const password = fd.get("password") as string;
+    const phone = (fd.get("phone") as string)?.trim();
+    const day = (fd.get("day") as string)?.trim();
+    const month = (fd.get("month") as string)?.trim();
+    const year = (fd.get("year") as string)?.trim();
+    let hasError = false;
+
+    if (!firstname) {
+      setFieldError("firstname", "Nama depan wajib diisi");
+      hasError = true;
+    }
+    if (!username) {
+      setFieldError("username", "Username wajib diisi");
+      hasError = true;
+    }
+    if (!email) {
+      setFieldError("email", "Email wajib diisi");
+      hasError = true;
+    } else if (!isValidEmail(email)) {
+      setFieldError("email", "Format email tidak valid");
+      hasError = true;
+    }
+    if (!password) {
+      setFieldError("password", "Password wajib diisi");
+      hasError = true;
+    } else {
+      const errs: string[] = [];
+      if (password.length < 8) errs.push("minimal 8 karakter");
+      if (!/[A-Z]/.test(password)) errs.push("minimal 1 huruf besar");
+      if (!/[a-z]/.test(password)) errs.push("minimal 1 huruf kecil");
+      if (!/[0-9]/.test(password)) errs.push("minimal 1 angka");
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password))
+        errs.push("minimal 1 karakter khusus (!@#$%^&* dll)");
+      if (errs.length > 0) {
+        setFieldError("password", `Password harus: ${errs.join(", ")}`);
+        hasError = true;
+      }
+    }
+    if (!phone) {
+      setFieldError("phone", "Nomor telepon wajib diisi");
+      hasError = true;
+    } else if (!isValidPhone(phone)) {
+      setFieldError(
+        "phone",
+        "Format nomor telepon harus +62xxxxxxxxx (contoh: +6281234567890)",
+      );
+      hasError = true;
+    }
+    if (!day || !month || !year) {
+      setFieldError("birthDate", "Tanggal lahir wajib diisi lengkap");
+      hasError = true;
+    } else {
+      const birthDateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      if (!isValidBirthDate(birthDateStr)) {
+        setFieldError("birthDate", "Format tanggal lahir tidak valid");
+        hasError = true;
+      } else {
+        const dob = new Date(birthDateStr);
+        const today = new Date();
+        const age = today.getFullYear() - dob.getFullYear();
+        if (dob > today || age < 13) {
+          setFieldError("birthDate", "Umur minimal 13 tahun");
+          hasError = true;
+        }
+      }
+    }
+
+    if (!hasError && onSignUp) {
+      onSignUp(e, setFieldError, setServerError);
+    } else {
+      e.preventDefault();
+    }
+  };
 
   return (
     <div className="min-h-dvh flex flex-col md:flex-row font-geist w-dvw overflow-hidden">
@@ -91,7 +275,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           <img className="w-45 mb-4 " src="assets/logo.png" alt="logo" />
           <div className="flex gap-1 bg-foreground/5 border border-border rounded-2xl p-1 mb-1 ">
             <button
-              onClick={() => setMode("signin")}
+              onClick={() => handleModeSwitch("signin")}
               className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
                 !isSignUp
                   ? "bg-[#16A34A] text-white shadow-sm"
@@ -101,7 +285,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               Sign In
             </button>
             <button
-              onClick={() => setMode("signup")}
+              onClick={() => handleModeSwitch("signup")}
               className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
                 isSignUp
                   ? "bg-[#16A34A] text-white shadow-sm"
@@ -137,37 +321,60 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           {/* ======================== SIGN IN FORM ======================== */}
           {!isSignUp && (
             <div className="flex flex-col gap-5 ">
-              <form className="space-y-5" onSubmit={onSignIn}>
-                <GlassInputWrapper>
-                  <input
-                    name="email"
-                    type="text"
-                    placeholder="email or username"
-                    className={inputClass}
-                  />
-                </GlassInputWrapper>
+              {/* Server error banner */}
+              {signInError && (
+                <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-600">
+                  {signInError}
+                </div>
+              )}
 
-                <GlassInputWrapper>
-                  <div className="relative">
+              <form className="space-y-5" onSubmit={handleSignInSubmit}>
+                <div>
+                  <GlassInputWrapper>
                     <input
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="passcode"
-                      className={`${inputClass} pr-12`}
+                      name="email"
+                      type="text"
+                      placeholder="email or username"
+                      className={`${inputClass} ${fieldErrors.email ? "border-red-500" : ""}`}
+                      onInput={() => clearFieldError("email")}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-3 flex items-center"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
-                      ) : (
-                        <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
-                      )}
-                    </button>
-                  </div>
-                </GlassInputWrapper>
+                  </GlassInputWrapper>
+                  {fieldErrors.email && (
+                    <p className="text-xs text-red-500 mt-1 ml-1">
+                      {fieldErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <GlassInputWrapper>
+                    <div className="relative">
+                      <input
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="passcode"
+                        className={`${inputClass} pr-12 ${fieldErrors.password ? "border-red-500" : ""}`}
+                        onInput={() => clearFieldError("password")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-3 flex items-center"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                        ) : (
+                          <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                        )}
+                      </button>
+                    </div>
+                  </GlassInputWrapper>
+                  {fieldErrors.password && (
+                    <p className="text-xs text-red-500 mt-1 ml-1">
+                      {fieldErrors.password}
+                    </p>
+                  )}
+                </div>
 
                 <div className="flex items-center justify-between text-sm">
                   <label className="flex items-center gap-3 cursor-pointer">
@@ -184,7 +391,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      onResetPassword?.();
+                      alert("Fitur reset password segera hadir");
                     }}
                     className="hover:underline text-[#16A34A] transition-colors"
                   >
@@ -220,16 +427,57 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           {/* ======================== SIGN UP FORM ======================== */}
           {isSignUp && (
             <div className="flex flex-col gap-5">
-              <form className="space-y-2.5" onSubmit={onSignUp}>
+              {/* Server error banner */}
+              {(serverError || signUpError) && (
+                <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-600">
+                  {serverError || signUpError}
+                </div>
+              )}
+
+              {/* Success banner */}
+              {signUpSuccess && (
+                <div className="rounded-xl bg-green-500/10 border border-green-500/30 px-4 py-3 text-sm text-green-600">
+                  {signUpSuccess}
+                </div>
+              )}
+
+              {/* Warning banner */}
+              {signupWarning && (
+                <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 px-4 py-3 text-sm text-yellow-700 flex items-start gap-3">
+                  <span className="flex-1">
+                    <strong>Heads up!</strong> Make sure all information is filled
+                    in correctly before submitting. Once registered, certain
+                    details cannot be changed.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSignupWarning(false)}
+                    className="text-yellow-700 hover:text-yellow-900 shrink-0 font-bold"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              <form className="space-y-2.5" onSubmit={handleSignUpSubmit}>
                 <div className="grid grid-cols-2 gap-3">
-                  <GlassInputWrapper>
-                    <input
-                      name="firstname"
-                      type="text"
-                      placeholder="First name"
-                      className={inputClass}
-                    />
-                  </GlassInputWrapper>
+                  <div>
+                    <GlassInputWrapper>
+                      <input
+                        name="firstname"
+                        type="text"
+                        placeholder="First name"
+                        className={`${inputClass} ${fieldErrors.firstname ? "border-red-500" : ""}`}
+                        onInput={() => clearFieldError("firstname")}
+                        onFocus={() => setSignupWarning(true)}
+                      />
+                    </GlassInputWrapper>
+                    {fieldErrors.firstname && (
+                      <p className="text-xs text-red-500 mt-1 ml-1">
+                        {fieldErrors.firstname}
+                      </p>
+                    )}
+                  </div>
                   <GlassInputWrapper>
                     <input
                       name="lastname"
@@ -241,24 +489,40 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 </div>
 
                 {/* Username */}
-                <GlassInputWrapper>
-                  <input
-                    name="username"
-                    type="text"
-                    placeholder="Username"
-                    className={inputClass}
-                  />
-                </GlassInputWrapper>
+                <div>
+                  <GlassInputWrapper>
+                    <input
+                      name="username"
+                      type="text"
+                      placeholder="Username"
+                      className={`${inputClass} ${fieldErrors.username ? "border-red-500" : ""}`}
+                      onInput={() => clearFieldError("username")}
+                    />
+                  </GlassInputWrapper>
+                  {fieldErrors.username && (
+                    <p className="text-xs text-red-500 mt-1 ml-1">
+                      {fieldErrors.username}
+                    </p>
+                  )}
+                </div>
 
                 {/* Phone */}
-                <GlassInputWrapper>
-                  <input
-                    name="phone"
-                    type="tel"
-                    placeholder="Phone number"
-                    className={inputClass}
-                  />
-                </GlassInputWrapper>
+                <div>
+                  <GlassInputWrapper>
+                    <input
+                      name="phone"
+                      type="tel"
+                      placeholder="+62xxxxxxxxx"
+                      className={`${inputClass} ${fieldErrors.phone ? "border-red-500" : ""}`}
+                      onInput={() => clearFieldError("phone")}
+                    />
+                  </GlassInputWrapper>
+                  {fieldErrors.phone && (
+                    <p className="text-xs text-red-500 mt-1 ml-1">
+                      {fieldErrors.phone}
+                    </p>
+                  )}
+                </div>
 
                 {/* Birthday */}
                 <div>
@@ -274,7 +538,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         placeholder="Day"
                         min={1}
                         max={31}
-                        className={inputClass}
+                        className={`${inputClass} ${fieldErrors.birthDate ? "border-red-500" : ""}`}
+                        onInput={() => clearFieldError("birthDate")}
                       />
                     </GlassInputWrapper>
 
@@ -284,7 +549,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         <select
                           name="month"
                           defaultValue=""
-                          className={`${inputClass} appearance-none pr-8 cursor-pointer`}
+                          className={`${inputClass} appearance-none pr-8 cursor-pointer ${fieldErrors.birthDate ? "border-red-500" : ""}`}
+                          onChange={() => clearFieldError("birthDate")}
                         >
                           <option
                             value=""
@@ -311,44 +577,73 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         placeholder="Year"
                         min={1900}
                         max={new Date().getFullYear()}
-                        className={inputClass}
+                        className={`${inputClass} ${fieldErrors.birthDate ? "border-red-500" : ""}`}
+                        onInput={() => clearFieldError("birthDate")}
                       />
                     </GlassInputWrapper>
                   </div>
+                  {fieldErrors.birthDate && (
+                    <p className="text-xs text-red-500 mt-1 ml-1">
+                      {fieldErrors.birthDate}
+                    </p>
+                  )}
                 </div>
 
                 {/* Email */}
-                <GlassInputWrapper>
-                  <input
-                    name="email"
-                    type="email"
-                    placeholder="Email address"
-                    className={inputClass}
-                  />
-                </GlassInputWrapper>
-
-                {/* Passcode */}
-                <GlassInputWrapper>
-                  <div className="relative">
+                <div>
+                  <GlassInputWrapper>
                     <input
-                      name="password"
-                      type={showSignUpPassword ? "text" : "password"}
-                      placeholder="Passcode"
-                      className={`${inputClass} pr-12`}
+                      name="email"
+                      type="email"
+                      placeholder="Email address"
+                      className={`${inputClass} ${fieldErrors.email ? "border-red-500" : ""}`}
+                      onInput={() => clearFieldError("email")}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowSignUpPassword(!showSignUpPassword)}
-                      className="absolute inset-y-0 right-3 flex items-center"
-                    >
-                      {showSignUpPassword ? (
-                        <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
-                      ) : (
-                        <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
-                      )}
-                    </button>
-                  </div>
-                </GlassInputWrapper>
+                  </GlassInputWrapper>
+                  {fieldErrors.email && (
+                    <p className="text-xs text-red-500 mt-1 ml-1">
+                      {fieldErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                {/* Password */}
+                <div>
+                  <GlassInputWrapper>
+                    <div className="relative">
+                      <input
+                        name="password"
+                        type={showSignUpPassword ? "text" : "password"}
+                        placeholder="Password"
+                        className={`${inputClass} pr-12 ${fieldErrors.password ? "border-red-500" : ""}`}
+                        onInput={() => clearFieldError("password")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowSignUpPassword(!showSignUpPassword)
+                        }
+                        className="absolute inset-y-0 right-3 flex items-center"
+                      >
+                        {showSignUpPassword ? (
+                          <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                        ) : (
+                          <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                        )}
+                      </button>
+                    </div>
+                  </GlassInputWrapper>
+                  {/* Password requirements hint */}
+                  <p className="text-[10px] text-muted-foreground mt-1 ml-1 leading-relaxed">
+                    Minimal 8 karakter, 1 huruf besar, 1 huruf kecil, 1 angka, 1
+                    karakter khusus (!@#$%^&amp;* dll)
+                  </p>
+                  {fieldErrors.password && (
+                    <p className="text-xs text-red-500 mt-1 ml-1">
+                      {fieldErrors.password}
+                    </p>
+                  )}
+                </div>
 
                 {/* Register button */}
                 <button

@@ -7,6 +7,8 @@ import { Sheet, SheetContent, SheetFooter } from "@/components/navBase/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { MenuToggle } from "@/components/navBase/menu-toggle";
 import { ChevronDown, LogOut } from "lucide-react";
+import { useAuthStore } from "@/features/auth/store/auth.store";
+import { logout as apiLogout } from "@/lib/services/auth.service";
 
 export function SimpleHeader() {
   const navigate = useNavigate();
@@ -17,7 +19,21 @@ export function SimpleHeader() {
   const [selectedperan, setSelectedperan] = React.useState<string | null>(null);
   const [selectedLang, setSelectedLang] = React.useState<string | null>(null);
 
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const { token, isHydrated, logout } = useAuthStore();
+
+  // Wait for persist to rehydrate
+  if (!isHydrated) return (
+    <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-lg">
+      <nav className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between px-4">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+          <img src="/Untitled-1j.png" alt="logo" width={32} height={32} />
+          <p className="text-lg font-black tracking-tight">serba</p>
+        </div>
+      </nav>
+    </header>
+  );
+
+  const isLoggedIn = !!token;
 
   const peranItems = ["pemberi", "penerima"];
   const idItems = ["eng", "中国", "id"];
@@ -26,8 +42,13 @@ export function SimpleHeader() {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
+  const handleLogout = async () => {
+    try {
+      await apiLogout();
+    } catch {
+      // ignore
+    }
+    logout();
     navigate("/login", { replace: true });
   };
 
