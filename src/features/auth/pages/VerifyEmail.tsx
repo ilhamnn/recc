@@ -39,7 +39,6 @@ export default function VerifyEmailPage() {
     };
   }, [resendCooldown]);
 
-  // Verify token when present
   useEffect(() => {
     if (token) {
       handleVerify();
@@ -55,7 +54,6 @@ export default function VerifyEmailPage() {
       setResendCooldown(RESEND_COOLDOWN);
     } catch (err: any) {
       const errorMsg = err?.message || "";
-      // Handle 429 Too Many Requests
       if (err?.response?.status === 429 || errorMsg.includes("too many")) {
         setMessage(
           "Terlalu banyak permintaan. Silakan tunggu beberapa saat sebelum mencoba lagi.",
@@ -74,8 +72,20 @@ export default function VerifyEmailPage() {
       await verifyEmail(token);
       setStatus("success");
     } catch (err: any) {
-      setStatus("error");
-      setMessage(err?.message || "Verifikasi gagal. Token mungkin kadaluarsa.");
+      const errMsg = err?.message || "";
+      if (
+        err?.response?.status === 400 ||
+        err?.response?.status === 409 ||
+        errMsg.toLowerCase().includes("already verified") ||
+        errMsg.toLowerCase().includes("sudah") ||
+        errMsg.toLowerCase().includes("terverifikasi") ||
+        errMsg.toLowerCase().includes("conflict")
+      ) {
+        setStatus("success");
+      } else {
+        setStatus("error");
+        setMessage(errMsg || "Verifikasi gagal. Token mungkin kadaluarsa.");
+      }
     }
   };
 
@@ -138,7 +148,11 @@ export default function VerifyEmailPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <img className="w-20 mx-auto mb-4" src="assets/logo.png" alt="logo" />
+          <img
+            className="w-20 mx-auto mb-4"
+            src="/assets/logo.png"
+            alt="logo"
+          />
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 rounded-full bg-[#16A34A]/10 flex items-center justify-center">
               <Mail className="w-8 h-8 text-[#16A34A]" />
@@ -173,7 +187,7 @@ export default function VerifyEmailPage() {
             Buka email kamu dan klik tombol{" "}
             <strong className="text-foreground">Verifikasi Email</strong> dari
             kami. Link berlaku selama{" "}
-            <strong className="text-foreground">2 jam</strong>.
+            <strong className="text-foreground">2 min</strong>.
           </p>
           <p className="text-sm text-muted-foreground">
             Tidak menerima email? Periksa folder <strong>Spam</strong> atau klik
