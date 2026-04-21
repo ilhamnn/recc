@@ -44,6 +44,26 @@ export const logout = async () => {
   return res.data;
 };
 
+// ─── Google ───────────────────────────────────────────────────────────────
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173";
+
+export const getGoogleAuthUrl = (mode: "signin" | "signup") => {
+  const redirectPath = mode === "signup" ? "/register" : "/login";
+  const url = new URL(`${BASE_URL}/public/api/auth/google`);
+  url.searchParams.set("redirectPath", `${redirectPath}`);
+  return url.toString();
+};
+
+export const signInWithGoogle = () => {
+  window.location.href = getGoogleAuthUrl("signin");
+};
+
+export const signUpWithGoogle = () => {
+  window.location.href = getGoogleAuthUrl("signup");
+};
+
 // ─── Email Verification ─────────────────────────────────────────────────────
 
 export const sendEmailVerification = async (email: string) => {

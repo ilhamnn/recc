@@ -1,5 +1,9 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import {
+  signInWithGoogle,
+  signUpWithGoogle,
+} from "@/lib/services/auth.service";
 
 const GoogleIcon = () => (
   <svg
@@ -254,8 +258,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         const dob = new Date(birthDateStr);
         const today = new Date();
         const age = today.getFullYear() - dob.getFullYear();
-        if (dob > today || age < 13) {
-          setFieldError("birthDate", "Umur minimal 13 tahun");
+        if (dob > today || age < 15) {
+          setFieldError("birthDate", "Umur minimal 15 tahun");
           hasError = true;
         }
       }
@@ -445,9 +449,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               {signupWarning && (
                 <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 px-4 py-3 text-sm text-yellow-700 flex items-start gap-3">
                   <span className="flex-1">
-                    <strong>Heads up!</strong> Make sure all information is filled
-                    in correctly before submitting. Once registered, certain
-                    details cannot be changed.
+                    <strong>Heads up!</strong> Make sure all information is
+                    filled in correctly before submitting. Once registered,
+                    certain details cannot be changed.
                   </span>
                   <button
                     type="button"

@@ -7,6 +7,8 @@ export {
   signUp,
   refreshToken,
   logout,
+  signInWithGoogle,
+  signUpWithGoogle,
   sendEmailVerification,
   verifyEmail,
   sendPhoneOtp,

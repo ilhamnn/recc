@@ -1,16 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthPage } from "@/features/auth/pages/sign-in-up";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 
-const SignInPageDemo = () => {
+const GatePage = () => {
   const navigate = useNavigate();
   const { login, register } = useAuth();
   const { token, setAuth } = useAuthStore();
+  const [searchParams] = useSearchParams();
   const [signInError, setSignInError] = useState("");
   const [signUpError, setSignUpError] = useState("");
   const [signUpSuccess, setSignUpSuccess] = useState("");
+
+  // Handle Google OAuth callback — backend redirect ke:
+  // /login?accessToken=...&isProfileComplete=... (signin)
+  // /register?accessToken=...&isProfileComplete=... (signup)
+  useEffect(() => {
+    const accessToken = searchParams.get("accessToken");
+    const isProfileComplete = searchParams.get("isProfileComplete");
+
+    if (accessToken) {
+      if (isProfileComplete === "false") {
+        // Google user baru — perlu verifikasi email
+        setAuth({}, accessToken);
+        navigate("/login/verify-email", { replace: true });
+      } else {
+        // Google user lama — profile sudah lengkap
+        setAuth({}, accessToken);
+        navigate("/r", { replace: true });
+      }
+    }
+  }, [searchParams, setAuth, navigate]);
 
   if (token) return <Navigate to="/r" replace />;
 
@@ -70,6 +91,18 @@ const SignInPageDemo = () => {
     }
   };
 
+  const handleGoogleSignIn = () => {
+    import("@/lib/services/auth.service").then(({ signInWithGoogle }) => {
+      signInWithGoogle();
+    });
+  };
+
+  const handleGoogleSignUp = () => {
+    import("@/lib/services/auth.service").then(({ signUpWithGoogle }) => {
+      signUpWithGoogle();
+    });
+  };
+
   return (
     <div className="bg-background text-foreground overflow-x-hidden">
       <AuthPage
@@ -79,11 +112,11 @@ const SignInPageDemo = () => {
         signUpSuccess={signUpSuccess}
         onSignIn={handleSignIn}
         onSignUp={handleSignUp}
-        onGoogleSignIn={() => alert("Google Sign In")}
-        onGoogleSignUp={() => alert("Google Sign Up")}
+        onGoogleSignIn={handleGoogleSignIn}
+        onGoogleSignUp={handleGoogleSignUp}
       />
     </div>
   );
 };
 
-export default SignInPageDemo;
+export default GatePage;
