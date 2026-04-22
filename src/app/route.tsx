@@ -3,7 +3,9 @@ import LandingPage from "@/pages/landing/Landing";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 
 import LoginPage from "@/features/auth/pages/Gate";
+import RegisterPage from "@/features/auth/pages/Gate"; // same component, backend handles mode via redirectPath
 import VerifyEmailPage from "@/features/auth/pages/VerifyEmail";
+import CompleteProfilePage from "@/features/auth/pages/CompleteProfile";
 import PenerimaPage from "@/features/auth/pages/Penerima";
 import PemberiPage from "@/features/auth/pages/Pemberi";
 
@@ -16,7 +18,9 @@ export default function AppRoutes() {
       {/* AUTH (tanpa navbar) */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/login/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/login/complete-profile" element={<CompleteProfilePage />} />
       </Route>
 
       {/* MAIN (dengan navbar) */}

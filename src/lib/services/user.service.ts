@@ -22,3 +22,16 @@ export const updateUser = async (data: FormData) => {
   });
   return res.data;
 };
+
+export const completeUserProfile = async (
+  data: { birthDate: string; phone: string },
+  token: string,
+) => {
+  const formData = new FormData();
+  formData.append("birthDate", data.birthDate);
+  formData.append("phone", data.phone);
+  const res = await API.patch("/api/users/complete-profile", formData, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};

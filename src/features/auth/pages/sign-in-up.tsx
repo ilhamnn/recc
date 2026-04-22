@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
 import {
   signInWithGoogle,
   signUpWithGoogle,
@@ -93,6 +93,13 @@ const MONTHS = [
   "November",
   "December",
 ];
+
+const MONTHS_SHORT = MONTHS.map((m) => m.slice(0, 3));
+
+const getYearBounds = () => ({
+  minYear: new Date().getFullYear() - 100,
+  maxYear: new Date().getFullYear() - 15,
+});
 
 // --- MAIN COMPONENT ---
 
@@ -533,37 +540,59 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   <p className="text-xs text-muted-foreground mb-2 ml-1">
                     Date of birth
                   </p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {/* Day */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Day — stepper */}
                     <GlassInputWrapper>
-                      <input
-                        name="day"
-                        type="number"
-                        placeholder="Day"
-                        min={1}
-                        max={31}
-                        className={`${inputClass} ${fieldErrors.birthDate ? "border-red-500" : ""}`}
-                        onInput={() => clearFieldError("birthDate")}
-                      />
+                      <div className="flex items-center gap-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const dayInput = document.querySelector("[name=day]") as HTMLInputElement;
+                            const v = parseInt(dayInput.value || "1");
+                            if (v > 1) dayInput.value = String(v - 1);
+                            clearFieldError("birthDate");
+                          }}
+                          className="flex items-center justify-center w-7 h-[50px] hover:bg-foreground/10 rounded-l-2xl transition-colors shrink-0"
+                        >
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <input
+                          name="day"
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="DD"
+                          maxLength={2}
+                          className={`${inputClass} text-center no-arrow w-full min-w-0`}
+                          onInput={() => clearFieldError("birthDate")}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const dayInput = document.querySelector("[name=day]") as HTMLInputElement;
+                            const v = parseInt(dayInput.value || "0");
+                            if (v < 31) dayInput.value = String(v + 1);
+                            clearFieldError("birthDate");
+                          }}
+                          className="flex items-center justify-center w-7 h-[50px] hover:bg-foreground/10 rounded-r-2xl transition-colors shrink-0"
+                        >
+                          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </div>
                     </GlassInputWrapper>
 
-                    {/* Month */}
+                    {/* Month — select with chevron */}
                     <GlassInputWrapper>
-                      <div className="relative">
+                      <div className="relative flex items-center">
                         <select
                           name="month"
                           defaultValue=""
-                          className={`${inputClass} appearance-none pr-8 cursor-pointer ${fieldErrors.birthDate ? "border-red-500" : ""}`}
+                          className={`${inputClass} appearance-none cursor-pointer pr-7 ${fieldErrors.birthDate ? "border-red-500" : ""}`}
                           onChange={() => clearFieldError("birthDate")}
                         >
-                          <option
-                            value=""
-                            disabled
-                            className="text-muted-foreground"
-                          >
-                            Month
+                          <option value="" disabled className="text-muted-foreground">
+                            Mo
                           </option>
-                          {MONTHS.map((m, i) => (
+                          {MONTHS_SHORT.map((m, i) => (
                             <option key={m} value={i + 1}>
                               {m}
                             </option>
@@ -573,17 +602,46 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       </div>
                     </GlassInputWrapper>
 
-                    {/* Year */}
+                    {/* Year — stepper */}
                     <GlassInputWrapper>
-                      <input
-                        name="year"
-                        type="number"
-                        placeholder="Year"
-                        min={1900}
-                        max={new Date().getFullYear()}
-                        className={`${inputClass} ${fieldErrors.birthDate ? "border-red-500" : ""}`}
-                        onInput={() => clearFieldError("birthDate")}
-                      />
+                      <div className="flex items-center gap-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const yearInput = document.querySelector("[name=year]") as HTMLInputElement;
+                            const { minYear } = getYearBounds();
+                            const v = parseInt(yearInput.value || String(new Date().getFullYear()));
+                            if (v > minYear) yearInput.value = String(v - 1);
+                            clearFieldError("birthDate");
+                          }}
+                          className="flex items-center justify-center w-7 h-[50px] hover:bg-foreground/10 rounded-l-2xl transition-colors shrink-0"
+                        >
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <input
+                          name="year"
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="YYYY"
+                          maxLength={4}
+                          className={`${inputClass} text-center no-arrow w-full min-w-0`}
+                          onInput={() => clearFieldError("birthDate")}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const yearInput = document.querySelector("[name=year]") as HTMLInputElement;
+                            const { maxYear } = getYearBounds();
+                            const v = parseInt(yearInput.value || "0");
+                            const clamped = Math.min(v, maxYear);
+                            if (clamped < maxYear) yearInput.value = String(clamped + 1);
+                            clearFieldError("birthDate");
+                          }}
+                          className="flex items-center justify-center w-7 h-[50px] hover:bg-foreground/10 rounded-r-2xl transition-colors shrink-0"
+                        >
+                          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </div>
                     </GlassInputWrapper>
                   </div>
                   {fieldErrors.birthDate && (

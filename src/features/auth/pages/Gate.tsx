@@ -22,11 +22,9 @@ const GatePage = () => {
 
     if (accessToken) {
       if (isProfileComplete === "false") {
-        // Google user baru — perlu verifikasi email
         setAuth({}, accessToken);
-        navigate("/login/verify-email", { replace: true });
+        navigate("/login/complete-profile", { replace: true });
       } else {
-        // Google user lama — profile sudah lengkap
         setAuth({}, accessToken);
         navigate("/r", { replace: true });
       }

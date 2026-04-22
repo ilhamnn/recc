@@ -17,7 +17,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isHydrated: false,
-      setAuth: (user, token) => set({ user, token }),
+      setAuth: (user, token) => set({ user, token, isHydrated: true }),
       logout: () => set({ user: null, token: null }),
       fetchUser: async () => {
         try {
