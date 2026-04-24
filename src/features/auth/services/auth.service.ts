@@ -11,8 +11,6 @@ export {
   signUpWithGoogle,
   sendEmailVerification,
   verifyEmail,
-  sendPhoneOtp,
-  verifyPhoneOtp,
   requestPasswordReset,
   resetPassword,
 } from "@/lib/services/auth.service";

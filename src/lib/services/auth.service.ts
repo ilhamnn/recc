@@ -4,7 +4,6 @@ import { API } from "@/lib/api";
 
 export const signIn = async (usernameOrEmail: string, password: string) => {
   const res = await API.post("/public/api/auth/login", { usernameOrEmail, password });
-  // res.data = { success, message, data: "token_string" }
   const accessToken = res.data?.data as string;
   return { accessToken };
 };
@@ -50,7 +49,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173";
 
 export const getGoogleAuthUrl = (mode: "signin" | "signup") => {
-  const redirectPath = mode === "signup" ? "/register" : "/login";
+  const redirectPath = "/auth/google/callback"; 
   const url = new URL(`${BASE_URL}/public/api/auth/google`);
   url.searchParams.set("redirectPath", `${redirectPath}`);
   return url.toString();
@@ -75,18 +74,6 @@ export const sendEmailVerification = async (email: string) => {
 export const verifyEmail = async (token: string) => {
   const res = await API.get("/public/api/emailVerifications/verify", { params: { token } });
    console.log(res);
-  return res.data;
-};
-
-// ─── Phone OTP ───────────────────────────────────────────────────────────────
-
-export const sendPhoneOtp = async (phone: string) => {
-  const res = await API.post("/otp/phone/send", { phone });
-  return res.data;
-};
-
-export const verifyPhoneOtp = async (phone: string, otp: number) => {
-  const res = await API.get("/otp/phone/verify", { params: { phone, otp } });
   return res.data;
 };
 

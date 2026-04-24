@@ -4,6 +4,7 @@ import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 
 import LoginPage from "@/features/auth/pages/Gate";
 import RegisterPage from "@/features/auth/pages/Gate"; // same component, backend handles mode via redirectPath
+import GoogleCallbackPage from "@/features/auth/pages/GoogleCallback";
 import VerifyEmailPage from "@/features/auth/pages/VerifyEmail";
 import CompleteProfilePage from "@/features/auth/pages/CompleteProfile";
 import PenerimaPage from "@/features/auth/pages/Penerima";
@@ -21,6 +22,7 @@ export default function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login/verify-email" element={<VerifyEmailPage />} />
         <Route path="/login/complete-profile" element={<CompleteProfilePage />} />
+        <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
       </Route>
 
       {/* MAIN (dengan navbar) */}

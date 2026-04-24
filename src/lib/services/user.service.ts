@@ -1,14 +1,13 @@
 import { API } from "@/lib/api";
 
-// User services
 export const getCurrentUser = async () => {
   const res = await API.get("/api/users/current");
-  return res.data; // { success, message, data: { id, username, email, profilePictUrl, name, isEmailVerified, isPhoneVerified } }
+  return res.data;
 };
 
 export const getProfile = async () => {
   const res = await API.get("/api/users/profile");
-  return res.data; // full profile with locations, stats, reviews
+  return res.data;
 };
 
 export const getUserReviews = async (params?: { rating?: number; as?: string; page?: number; size?: number }) => {
@@ -17,21 +16,28 @@ export const getUserReviews = async (params?: { rating?: number; as?: string; pa
 };
 
 export const updateUser = async (data: FormData) => {
-  const res = await API.patch("/api/users/current", data, {
+  const res = await API.patch("/api/users", data, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
 };
 
-export const completeUserProfile = async (
-  data: { birthDate: string; phone: string },
-  token: string,
-) => {
-  const formData = new FormData();
-  formData.append("birthDate", data.birthDate);
-  formData.append("phone", data.phone);
-  const res = await API.patch("/api/users/complete-profile", formData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const completeUserProfile = async (data: {
+  username?: string;
+  birthDate?: string;
+  firstName?: string;
+  lastName?: string;
+}) => {
+  const res = await API.patch("/api/users", data);
+  return res.data;
+};
+
+export const sendPhoneOtp = async (phone: string) => {
+  const res = await API.post("/api/otp/phone/send", { phone });
+  return res.data;
+};
+
+export const verifyPhoneOtp = async (phone: string, otp: string) => {
+  const res = await API.post("/api/otp/phone/verify", { phone, otp });
   return res.data;
 };
