@@ -6,8 +6,18 @@ import { useAuthStore } from "@/features/auth/store/auth.store";
 import { completeUserProfile } from "@/lib/services/user.service";
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 const MONTHS_SHORT = MONTHS.map((m) => m.slice(0, 3));
@@ -21,8 +31,14 @@ const GatePage = () => {
   const [signUpError, setSignUpError] = useState("");
   const [signUpSuccess, setSignUpSuccess] = useState("");
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [profileData, setProfileData] = useState({ phone: "", day: "", month: "", year: "" });
-  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
+  const [profileData, setProfileData] = useState({
+    day: "",
+    month: "",
+    year: "",
+  });
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>(
+    {},
+  );
   const [profileSubmitting, setProfileSubmitting] = useState(false);
   const [profileServerError, setProfileServerError] = useState("");
 
@@ -59,9 +75,7 @@ const GatePage = () => {
       setAuth({ email: usernamOrEmail }, accessToken);
       navigate("/r", { replace: true });
     } catch (err: any) {
-      setSignInError(
-        err?.message || "Email, username, atau password salah",
-      );
+      setSignInError(err?.message || "Email, username, atau password salah");
     }
   };
 
@@ -92,9 +106,12 @@ const GatePage = () => {
       const token = res?.accessToken;
       if (token) {
         setAuth(user, token);
-        navigate("/r", { replace: true });
+        navigate("/login/verify-phone", { replace: true });
       } else {
-        navigate(`/login/verify-email?email=${encodeURIComponent(rawData.email as string)}`, { replace: true });
+        navigate(
+          `/login/verify-email?email=${encodeURIComponent(rawData.email as string)}`,
+          { replace: true },
+        );
       }
     } catch (err: any) {
       setSignUpError(err?.message || "Registrasi gagal. Silakan coba lagi.");
@@ -113,9 +130,7 @@ const GatePage = () => {
     });
   };
 
-  // ─── Profile completion modal ─────────────────────────────────────────────
-  const isValidPhone = (v: string) => /^(\+62|62|0)[0-9]{9,13}$/.test(v);
-
+  // ─── Profile completion modal (Google OAuth — birth date only) ─────────────
   const setFieldError = (field: string, msg: string) =>
     setProfileErrors((prev) => ({ ...prev, [field]: msg }));
   const clearFieldError = (field: string) =>
@@ -130,14 +145,6 @@ const GatePage = () => {
     setProfileServerError("");
     const newErrors: Record<string, string> = {};
     let hasError = false;
-
-    if (!profileData.phone) {
-      newErrors.phone = "Nomor telepon wajib diisi";
-      hasError = true;
-    } else if (!isValidPhone(profileData.phone)) {
-      newErrors.phone = "Format: +62xxxxxxxxx";
-      hasError = true;
-    }
 
     if (!profileData.day || !profileData.month || !profileData.year) {
       newErrors.birthDate = "Tanggal lahir wajib diisi lengkap";
@@ -161,7 +168,7 @@ const GatePage = () => {
     setProfileSubmitting(true);
     try {
       const birthDate = `${profileData.year}-${String(profileData.month).padStart(2, "0")}-${String(profileData.day).padStart(2, "0")}`;
-      await completeUserProfile({ birthDate, phone: profileData.phone }, token!);
+      await completeUserProfile({ birthDate });
       navigate("/r", { replace: true });
     } catch (err: any) {
       setProfileServerError(err?.message || "Gagal menyimpan profil.");
@@ -176,10 +183,16 @@ const GatePage = () => {
         <div className="min-h-dvh flex items-center justify-center p-8">
           <div className="w-full max-w-md bg-background rounded-2xl border border-border shadow-xl p-8">
             <div className="text-center mb-6">
-              <img className="w-16 mx-auto mb-3" src="/assets/logo.png" alt="logo" />
-              <h2 className="text-2xl font-bold text-foreground">Lengkapi Profil Kamu</h2>
+              <img
+                className="w-16 mx-auto mb-3"
+                src="/assets/logo.png"
+                alt="logo"
+              />
+              <h2 className="text-2xl font-bold text-foreground">
+                Lengkapi Profil Kamu
+              </h2>
               <p className="text-muted-foreground text-sm mt-1">
-                Masukkan nomor telepon dan tanggal lahir sebelum mulai.
+                Masukkan tanggal lahir sebelum mulai.
               </p>
             </div>
 
@@ -190,28 +203,6 @@ const GatePage = () => {
             )}
 
             <form className="space-y-4" onSubmit={handleProfileSubmit}>
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5 ml-1">
-                  Nomor Telepon
-                </label>
-                <input
-                  type="tel"
-                  value={profileData.phone}
-                  onChange={(e) => {
-                    setProfileData((p) => ({ ...p, phone: e.target.value }));
-                    clearFieldError("phone");
-                  }}
-                  placeholder="+62xxxxxxxxx"
-                  className={`w-full bg-transparent text-sm px-4 py-2 rounded-2xl border h-[50px] focus:outline-none transition-colors focus-within:border-[#16A34A] focus-within:bg-[#A0F2BE]/60 ${
-                    profileErrors.phone ? "border-red-500" : "border-border"
-                  }`}
-                />
-                {profileErrors.phone && (
-                  <p className="text-xs text-red-500 mt-1 ml-1">{profileErrors.phone}</p>
-                )}
-              </div>
-
               {/* Birth date */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5 ml-1">
@@ -229,27 +220,52 @@ const GatePage = () => {
                     min={1}
                     max={31}
                     className={`w-full bg-transparent text-sm px-3 py-2 rounded-2xl border h-[50px] focus:outline-none transition-colors focus-within:border-[#16A34A] focus-within:bg-[#A0F2BE]/60 ${
-                      profileErrors.birthDate ? "border-red-500" : "border-border"
+                      profileErrors.birthDate
+                        ? "border-red-500"
+                        : "border-border"
                     }`}
                   />
                   <div className="relative">
                     <select
                       value={profileData.month}
                       onChange={(e) => {
-                        setProfileData((p) => ({ ...p, month: e.target.value }));
+                        setProfileData((p) => ({
+                          ...p,
+                          month: e.target.value,
+                        }));
                         clearFieldError("birthDate");
                       }}
                       className={`w-full bg-transparent text-sm px-3 py-2 rounded-2xl border h-[50px] focus:outline-none transition-colors focus-within:border-[#16A34A] focus-within:bg-[#A0F2BE]/60 appearance-none pr-7 cursor-pointer ${
-                        profileErrors.birthDate ? "border-red-500" : "border-border"
+                        profileErrors.birthDate
+                          ? "border-red-500"
+                          : "border-border"
                       }`}
                     >
-                      <option value="" disabled className="text-muted-foreground">Mo</option>
+                      <option
+                        value=""
+                        disabled
+                        className="text-muted-foreground"
+                      >
+                        Mo
+                      </option>
                       {MONTHS_SHORT.map((m, i) => (
-                        <option key={m} value={i + 1}>{m}</option>
+                        <option key={m} value={i + 1}>
+                          {m}
+                        </option>
                       ))}
                     </select>
-                    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    <svg
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </div>
                   <input
@@ -263,12 +279,16 @@ const GatePage = () => {
                     min={1900}
                     max={new Date().getFullYear()}
                     className={`w-full bg-transparent text-sm px-3 py-2 rounded-2xl border h-[50px] focus:outline-none transition-colors focus-within:border-[#16A34A] focus-within:bg-[#A0F2BE]/60 ${
-                      profileErrors.birthDate ? "border-red-500" : "border-border"
+                      profileErrors.birthDate
+                        ? "border-red-500"
+                        : "border-border"
                     }`}
                   />
                 </div>
                 {profileErrors.birthDate && (
-                  <p className="text-xs text-red-500 mt-1 ml-1">{profileErrors.birthDate}</p>
+                  <p className="text-xs text-red-500 mt-1 ml-1">
+                    {profileErrors.birthDate}
+                  </p>
                 )}
               </div>
 

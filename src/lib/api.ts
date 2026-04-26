@@ -38,21 +38,18 @@ API.interceptors.response.use(
 
     if (data) {
       if (typeof data.errors === "string" && data.errors) {
-        // "Username already exists"
         errorMessage = data.errors;
-        console.log("1:", data)
       } else if (Array.isArray(data.errors) && data.errors.length > 0) {
-        // [{ path: "username", message: "..." }, ...]
-        console.log("2:",data)
         errorMessage = data.errors.map((e: { path: string; message: string }) => e.message).join(", ");
       } else if (typeof data.message === "string" && data.message) {
-        // fallback ke message
         errorMessage = data.message;
-        console.log("3:",data)
       }
     }
 
     err.message = errorMessage;
+    // Simpan errors/message di custom property agar bisa dibaca di catch block
+    (err as any).apiErrors = typeof data?.errors === "string" ? data.errors : errorMessage;
+    (err as any).apiMessage = typeof data?.message === "string" ? data.message : errorMessage;
     return Promise.reject(err);
   }
 );

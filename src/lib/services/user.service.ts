@@ -27,6 +27,7 @@ export const completeUserProfile = async (data: {
   birthDate?: string;
   firstName?: string;
   lastName?: string;
+  phone?: string;
 }) => {
   const res = await API.patch("/api/users", data);
   return res.data;
