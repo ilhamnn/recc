@@ -5,6 +5,7 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const API = axios.create({
   baseURL: BASE_URL,
+  withCredentials: true,
 });
 
 const PUBLIC_AUTH_PATHS = [
@@ -39,15 +40,17 @@ API.interceptors.response.use(
     if (data) {
       if (typeof data.errors === "string" && data.errors) {
         errorMessage = data.errors;
+        console.log(data);
       } else if (Array.isArray(data.errors) && data.errors.length > 0) {
         errorMessage = data.errors.map((e: { path: string; message: string }) => e.message).join(", ");
+        console.log(data);
       } else if (typeof data.message === "string" && data.message) {
         errorMessage = data.message;
+        console.log(data);
       }
     }
 
     err.message = errorMessage;
-    // Simpan errors/message di custom property agar bisa dibaca di catch block
     (err as any).apiErrors = typeof data?.errors === "string" ? data.errors : errorMessage;
     (err as any).apiMessage = typeof data?.message === "string" ? data.message : errorMessage;
     return Promise.reject(err);

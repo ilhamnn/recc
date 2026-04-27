@@ -35,8 +35,8 @@ export const useAuth = () => {
     }
   };
 
-  const logout = async () => {
-    await authService.logout();
+  const logout = async (token: string) => {
+    await authService.logout(token);
   };
 
   return { login, register, logout, loading, error };

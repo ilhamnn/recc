@@ -151,7 +151,7 @@ export default function VerifyPhonePage() {
       if (otpExpiryTimerRef.current) clearInterval(otpExpiryTimerRef.current);
       setResendCooldown(0);
       setOtpExpiryCooldown(0);
-      navigate("/complete-profile", { replace: true });
+      navigate("/r", { replace: true });
     } catch (err: any) {
       setOtpError(parseError(err));
     } finally {

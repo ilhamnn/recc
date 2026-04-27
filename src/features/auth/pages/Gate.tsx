@@ -25,7 +25,7 @@ const MONTHS_SHORT = MONTHS.map((m) => m.slice(0, 3));
 const GatePage = () => {
   const navigate = useNavigate();
   const { login, register } = useAuth();
-  const { token, isHydrated, setAuth, fetchUser } = useAuthStore();
+  const { token, isHydrated, setAuth } = useAuthStore();
   const [searchParams] = useSearchParams();
   const [signInError, setSignInError] = useState("");
   const [signUpError, setSignUpError] = useState("");
@@ -43,21 +43,28 @@ const GatePage = () => {
   const [profileServerError, setProfileServerError] = useState("");
 
   // Handle Google OAuth callback — backend redirect ke:
-  // /login?accessToken=...&isProfileComplete=... (signin)
-  // /register?accessToken=...&isProfileComplete=... (signup)
+  // /login?accessToken=...&isBirthDateCompleted=...&isPhoneCompleted=... (signin)
+  // /register?accessToken=...&isBirthDateCompleted=...&isPhoneCompleted=... (signup)
   useEffect(() => {
     const accessToken = searchParams.get("accessToken");
-    const isProfileComplete = searchParams.get("isProfileComplete");
+    const isBirthDateCompleted = searchParams.get("isBirthDateCompleted");
+    const isPhoneCompleted = searchParams.get("isPhoneCompleted");
 
     if (accessToken) {
       setAuth({}, accessToken);
-      if (isProfileComplete === "false") {
-        fetchUser().then(() => setShowProfileModal(true));
+
+      // Contract: backend redirect params sudah包含 isBirthDateCompleted & isPhoneCompleted
+      // isBirthDateCompleted = user.birthDate ? true : false
+      // isPhoneCompleted = user.isPhoneVerified === true && user.phoneVerifiedAt ? true : false
+      if (isBirthDateCompleted === "false") {
+        setShowProfileModal(true);
+      } else if (isPhoneCompleted === "false") {
+        navigate("/login/verify-phone", { replace: true });
       } else {
-        fetchUser().then(() => navigate("/r", { replace: true }));
+        navigate("/r", { replace: true });
       }
     }
-  }, [searchParams, setAuth, fetchUser, navigate]);
+  }, [searchParams, setAuth, navigate]);
 
   if (token && !showProfileModal) return <Navigate to="/r" replace />;
 
@@ -71,9 +78,24 @@ const GatePage = () => {
     const password = formData.get("password") as string;
 
     try {
-      const { accessToken } = await login(usernamOrEmail, password);
+      const res = await login(usernamOrEmail, password);
+      // Contract: { success, message, data: { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted } }
+      const { data } = res || {};
+      const { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted } = data || {};
+
       setAuth({ email: usernamOrEmail }, accessToken);
-      navigate("/r", { replace: true });
+
+      // Contract: data: { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted }
+      // nilai bisa false atau undefined — jika falsy artinya belum selesai
+      if (!isBirthDateCompleted) {
+        navigate("/login/complete-profile", { replace: true });
+      } else if (!isPhoneCompleted) {
+        navigate("/login/verify-phone", { replace: true });
+      } else if (!isEmailCompleted) {
+        navigate(`/login/verify-email?email=${encodeURIComponent(usernamOrEmail)}`, { replace: true });
+      } else {
+        navigate("/r", { replace: true });
+      }
     } catch (err: any) {
       setSignInError(err?.message || "Email, username, atau password salah");
     }
@@ -169,7 +191,7 @@ const GatePage = () => {
     try {
       const birthDate = `${profileData.year}-${String(profileData.month).padStart(2, "0")}-${String(profileData.day).padStart(2, "0")}`;
       await completeUserProfile({ birthDate });
-      navigate("/r", { replace: true });
+      navigate("/login/verify-phone", { replace: true });
     } catch (err: any) {
       setProfileServerError(err?.message || "Gagal menyimpan profil.");
     } finally {

@@ -151,7 +151,9 @@ Login untuk mendapatkan JWT token.
   "message": "Login successful",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "isProfileComplete": true or false
+    "isEmailCompleted": false or undifined,
+    "isPhoneCompleted": false or undifined,
+    "isBirthDateCompleted": false or undifined
   }
 }
 ```
@@ -253,7 +255,7 @@ User akan langsung diarahkan ke Google OAuth consent screen `https://accounts.go
 | `state` | string | Yes      | State untuk validasi dan redirectPath |
 
 **Response:** `302 Redirect`  
-- Sukses — user diarahkan ke url frontend: `${config.FRONTEND_URL}${redirectPath}?accessToken=${accessToken}&isProfileComplete=${user.isProfileComplete ?? false}`
+- Sukses — user diarahkan ke url frontend: `${config.FRONTEND_URL}${payload.redirect}?accessToken=${accessToken}&isBirthDateCompleted=${user.birthDate ? true : false}&isPhoneCompleted=${user.isPhoneVerified === true && user.phoneVerifiedAt ? true : false}`
 
 - Error — user diarahkan ke halaman login dengan query param `error`: `${config.FRONTEND_URL}/auth/login?error={errorCode}`
 

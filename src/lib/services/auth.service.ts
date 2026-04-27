@@ -4,8 +4,8 @@ import { API } from "@/lib/api";
 
 export const signIn = async (usernameOrEmail: string, password: string) => {
   const res = await API.post("/public/api/auth/login", { usernameOrEmail, password });
-  const accessToken = res.data?.data as string;
-  return { accessToken };
+  // Contract: { success, message, data: { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted } }
+  return res.data;
 };
 
 export const signUp = async (data: {
@@ -34,12 +34,16 @@ export const signUp = async (data: {
 };
 
 export const refreshToken = async () => {
-  const res = await API.post("/auth/refresh");
+  const res = await API.post("/public/api/auth/refresh");
   return { newAccessToken: res.data?.data as string };
 };
 
-export const logout = async () => {
-  const res = await API.post("/auth/logout");
+export const logout = async (token: string) => {
+  // Contract: POST /api/auth/logout — Authorization: Bearer <accessToken>
+  // Refresh token dari httpOnly cookie dikirim otomatis dengan withCredentials
+  const res = await API.post("/api/auth/logout", {}, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return res.data;
 };
 

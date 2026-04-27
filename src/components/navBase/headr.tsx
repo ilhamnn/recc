@@ -44,7 +44,7 @@ export function SimpleHeader() {
 
   const handleLogout = async () => {
     try {
-      await apiLogout();
+      await apiLogout(token);
     } catch {
       // ignore
     }

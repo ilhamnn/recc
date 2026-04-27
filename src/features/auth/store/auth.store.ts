@@ -23,8 +23,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           const data = await getCurrentUser();
           set({ user: data });
+          return data;
         } catch {
           // ignore
+          return null;
         }
       },
     }),

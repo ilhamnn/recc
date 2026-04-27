@@ -58,7 +58,7 @@ export default function CompleteProfilePage() {
     setLoading(true);
     try {
       await completeUserProfile({ birthDate: birthDateStr });
-      navigate("/r", { replace: true });
+      navigate("/login/verify-phone", { replace: true });
     } catch (err: any) {
       setServerError(parseError(err));
     } finally {
