@@ -8,6 +8,8 @@ export default function App() {
   const [searchParams] = useSearchParams();
   const { setAuth } = useAuthStore();
 
+  // Contract Google callback: ?accessToken=...&isBirthDateCompleted=...&isPhoneCompleted=...
+  // Note: isEmailCompleted TIDAK ada di callback karena email Google auto-verified
   useEffect(() => {
     const accessToken = searchParams.get("accessToken");
     const isBirthDateCompleted = searchParams.get("isBirthDateCompleted");
@@ -17,7 +19,7 @@ export default function App() {
 
     setAuth({}, accessToken);
 
-    // Contract (line 257): redirect params dari backend sudah berisi isBirthDateCompleted & isPhoneCompleted
+    // Google email auto-verified → langsung cek birth date & phone
     if (isBirthDateCompleted === "false") {
       navigate("/login/complete-profile", { replace: true });
     } else if (isPhoneCompleted === "false") {

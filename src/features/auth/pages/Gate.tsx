@@ -31,6 +31,7 @@ const GatePage = () => {
   const [signUpError, setSignUpError] = useState("");
   const [signUpSuccess, setSignUpSuccess] = useState("");
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [profileData, setProfileData] = useState({
     day: "",
     month: "",
@@ -43,8 +44,8 @@ const GatePage = () => {
   const [profileServerError, setProfileServerError] = useState("");
 
   // Handle Google OAuth callback — backend redirect ke:
-  // /login?accessToken=...&isBirthDateCompleted=...&isPhoneCompleted=... (signin)
-  // /register?accessToken=...&isBirthDateCompleted=...&isPhoneCompleted=... (signup)
+  // Contract: ?accessToken=...&isBirthDateCompleted=...&isPhoneCompleted=...
+  // Note: isEmailCompleted TIDAK ada karena email Google auto-verified
   useEffect(() => {
     const accessToken = searchParams.get("accessToken");
     const isBirthDateCompleted = searchParams.get("isBirthDateCompleted");
@@ -53,9 +54,7 @@ const GatePage = () => {
     if (accessToken) {
       setAuth({}, accessToken);
 
-      // Contract: backend redirect params sudah包含 isBirthDateCompleted & isPhoneCompleted
-      // isBirthDateCompleted = user.birthDate ? true : false
-      // isPhoneCompleted = user.isPhoneVerified === true && user.phoneVerifiedAt ? true : false
+      // Google email auto-verified → tidak perlu cek isEmailCompleted
       if (isBirthDateCompleted === "false") {
         setShowProfileModal(true);
       } else if (isPhoneCompleted === "false") {
@@ -66,8 +65,7 @@ const GatePage = () => {
     }
   }, [searchParams, setAuth, navigate]);
 
-  if (token && !showProfileModal) return <Navigate to="/r" replace />;
-
+  // Contract login: { success, message, data: { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted } }
   const handleSignIn = async (
     event: React.FormEvent<HTMLFormElement>,
     _setFieldError: (field: string, msg: string) => void,
@@ -77,30 +75,36 @@ const GatePage = () => {
     const usernamOrEmail = formData.get("email") as string;
     const password = formData.get("password") as string;
 
+    setIsAuthenticating(true);
+    setSignInError("");
+
     try {
       const res = await login(usernamOrEmail, password);
-      // Contract: { success, message, data: { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted } }
       const { data } = res || {};
       const { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted } = data || {};
 
+      // Simpan token
       setAuth({ email: usernamOrEmail }, accessToken);
 
-      // Contract: data: { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted }
-      // nilai bisa false atau undefined — jika falsy artinya belum selesai
-      if (!isBirthDateCompleted) {
-        navigate("/login/complete-profile", { replace: true });
-      } else if (!isPhoneCompleted) {
-        navigate("/login/verify-phone", { replace: true });
-      } else if (!isEmailCompleted) {
+      // Cek verify flow — mulai dari email → phone → birth date
+      if (isEmailCompleted === false) {
         navigate(`/login/verify-email?email=${encodeURIComponent(usernamOrEmail)}`, { replace: true });
+      } else if (isPhoneCompleted === false) {
+        navigate("/login/verify-phone", { replace: true });
+      } else if (isBirthDateCompleted === false) {
+        navigate("/login/complete-profile", { replace: true });
       } else {
         navigate("/r", { replace: true });
       }
     } catch (err: any) {
       setSignInError(err?.message || "Email, username, atau password salah");
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
+  // Contract register: { success, message, data: { id, username, email, isEmailVerified: false, isPhoneVerfied: false, ... } }
+  // Register TIDAK return accessToken → user harus verifikasi email dulu, baru login
   const handleSignUp = async (
     event: React.FormEvent<HTMLFormElement>,
     _setFieldError: (field: string, msg: string) => void,
@@ -123,18 +127,11 @@ const GatePage = () => {
     };
 
     try {
-      const res = await register(payload);
-      const user = res;
-      const token = res?.accessToken;
-      if (token) {
-        setAuth(user, token);
-        navigate("/login/verify-phone", { replace: true });
-      } else {
-        navigate(
-          `/login/verify-email?email=${encodeURIComponent(rawData.email as string)}`,
-          { replace: true },
-        );
-      }
+      await register(payload);
+
+      // Register tidak return token → redirect ke verify-email
+      setSignUpSuccess("Registrasi berhasil! Silakan verifikasi email kamu.");
+      navigate(`/login/verify-email?email=${encodeURIComponent(rawData.email as string)}`, { replace: true });
     } catch (err: any) {
       setSignUpError(err?.message || "Registrasi gagal. Silakan coba lagi.");
     }
