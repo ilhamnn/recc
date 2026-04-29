@@ -39,5 +39,6 @@ export const sendPhoneOtp = async (phone: string) => {
 
 export const verifyPhoneOtp = async (phone: string, otp: string) => {
   const res = await API.post("/api/otp/phone/verify", { phone, otp });
+  console.log(res);
   return res.data;
 };

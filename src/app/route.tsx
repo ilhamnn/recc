@@ -21,9 +21,6 @@ export default function AppRoutes() {
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/login/verify-phone" element={<VerifyPhonePage />} />
-        <Route path="/login/complete-profile" element={<CompleteProfilePage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
       </Route>
 
@@ -35,6 +32,13 @@ export default function AppRoutes() {
           <Route path="/r" element={<PenerimaPage />} />
           <Route path="/g" element={<PemberiPage />} />
         </Route>
+      </Route>
+
+      {/* VERIFY (locked — tidak boleh kemana sampai selesai) */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/login/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/login/verify-phone" element={<VerifyPhonePage />} />
+        <Route path="/login/complete-profile" element={<CompleteProfilePage />} />
       </Route>
 
       {/* fallback */}

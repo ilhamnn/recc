@@ -189,7 +189,7 @@ export default function VerifyPhonePage() {
             </p>
           </div>
           <button
-            onClick={() => navigate("/complete-profile", { replace: true })}
+            onClick={() => navigate("/login/complete-profile", { replace: true })}
             className="w-full rounded-2xl bg-[#16A34A] py-4 font-medium text-white hover:bg-[#1DB555]/90 transition-colors"
           >
             Lanjutkan
