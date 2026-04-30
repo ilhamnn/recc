@@ -43,21 +43,18 @@ const GatePage = () => {
   const [profileSubmitting, setProfileSubmitting] = useState(false);
   const [profileServerError, setProfileServerError] = useState("");
 
-  // Handle Google OAuth callback — backend redirect ke:
-  // Contract: ?accessToken=...&isBirthDateCompleted=...&isPhoneCompleted=...
-  // Note: isEmailCompleted TIDAK ada karena email Google auto-verified
   useEffect(() => {
     const accessToken = searchParams.get("accessToken");
-    const isBirthDateCompleted = searchParams.get("isBirthDateCompleted");
-    const isPhoneCompleted = searchParams.get("isPhoneCompleted");
+    const isBirthDateVerified = searchParams.get("isBirthDateVerified");
+    const isPhoneVerified = searchParams.get("isPhoneVerified");
 
     if (accessToken) {
       setAuth({}, accessToken);
 
-      // Google email auto-verified → tidak perlu cek isEmailCompleted
-      if (isBirthDateCompleted === "false") {
+      // Google email auto-verified → tidak perlu cek isEmailVerified
+      if (isBirthDateVerified === "false") {
         setShowProfileModal(true);
-      } else if (isPhoneCompleted === "false") {
+      } else if (isPhoneVerified === "false") {
         navigate("/login/verify-phone", { replace: true });
       } else {
         navigate("/r", { replace: true });
@@ -65,7 +62,7 @@ const GatePage = () => {
     }
   }, [searchParams, setAuth, navigate]);
 
-  // Contract login: { success, message, data: { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted } }
+  // Contract login: { success, message, data: { accessToken, isEmailVerified, isPhoneVerified, isBirthDateVerified } }
   const handleSignIn = async (
     event: React.FormEvent<HTMLFormElement>,
     _setFieldError: (field: string, msg: string) => void,
@@ -81,17 +78,25 @@ const GatePage = () => {
     try {
       const res = await login(usernamOrEmail, password);
       const { data } = res || {};
-      const { accessToken, isEmailCompleted, isPhoneCompleted, isBirthDateCompleted } = data || {};
+      const {
+        accessToken,
+        isEmailVerified,
+        isPhoneVerified,
+        isBirthDateVerified,
+      } = data || {};
 
       // Simpan token
       setAuth({ email: usernamOrEmail }, accessToken);
 
       // Cek verify flow — mulai dari email → phone → birth date
-      if (isEmailCompleted === false) {
-        navigate(`/login/verify-email?email=${encodeURIComponent(usernamOrEmail)}`, { replace: true });
-      } else if (isPhoneCompleted === false) {
+      if (isEmailVerified === false) {
+        navigate(
+          `/login/verify-email?email=${encodeURIComponent(usernamOrEmail)}`,
+          { replace: true },
+        );
+      } else if (isPhoneVerified === false) {
         navigate("/login/verify-phone", { replace: true });
-      } else if (isBirthDateCompleted === false) {
+      } else if (isBirthDateVerified === false) {
         navigate("/login/complete-profile", { replace: true });
       } else {
         navigate("/r", { replace: true });
@@ -131,7 +136,10 @@ const GatePage = () => {
 
       // Register tidak return token → redirect ke verify-email
       setSignUpSuccess("Registrasi berhasil! Silakan verifikasi email kamu.");
-      navigate(`/login/verify-email?email=${encodeURIComponent(rawData.email as string)}`, { replace: true });
+      navigate(
+        `/login/verify-email?email=${encodeURIComponent(rawData.email as string)}`,
+        { replace: true },
+      );
     } catch (err: any) {
       setSignUpError(err?.message || "Registrasi gagal. Silakan coba lagi.");
     }
