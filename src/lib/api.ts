@@ -8,19 +8,19 @@ export const API = axios.create({
   withCredentials: true,
 });
 
-const PUBLIC_AUTH_PATHS = [
-  "/auth/login",
-  "/auth/register",
-  "/auth/refresh",
-  "/public/api/auth/login",
-  "/public/api/auth/register",
-  "/public/api/auth/refresh",
-  "/public/api/emailVerifications/send-verification",
-  "/emailVerifications/send-verification",
-  "/emailVerifications/verify",
-  "/public/api/auth/google",
-  "/auth/google/callback",
-];
+// const PUBLIC_AUTH_PATHS = [
+//   "/auth/login",
+//   "/auth/register",
+//   "/auth/refresh",
+//   "/public/api/auth/login",
+//   "/public/api/auth/register",
+//   "/public/api/auth/refresh",
+//   "/public/api/emailVerifications/send-verification",
+//   "/emailVerifications/send-verification",
+//   "/emailVerifications/verify",
+//   "/public/api/auth/google",
+//   "/auth/google/callback",
+// ];
 
 API.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;

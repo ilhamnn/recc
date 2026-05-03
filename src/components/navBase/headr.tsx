@@ -3,48 +3,218 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Sheet, SheetContent, SheetFooter } from "@/components/navBase/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MenuToggle } from "@/components/navBase/menu-toggle";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, User, LogOut, Users, Bell } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { logout as apiLogout } from "@/lib/services/auth.service";
+import { cn } from "@/lib/utils";
+
+// ─── Bottom Mobile Navigation ───────────────────────────────────────────────
+
+const roleItems = [
+  { label: "Pemberi", value: "pemberi", path: "/g" },
+  { label: "Penerima", value: "penerima", path: "/r" },
+];
+
+function BottomNav({
+  selectedRole,
+  onRoleSelect,
+  onProfileClick,
+  onNotifClick,
+}: {
+  selectedRole: string | null;
+  onRoleSelect: (item: (typeof roleItems)[number]) => void;
+  onProfileClick: () => void;
+  onNotifClick: () => void;
+}) {
+  const [roleOpen, setRoleOpen] = React.useState(false);
+  const [profileOpen, setProfileOpen] = React.useState(false);
+  const { token, isHydrated } = useAuthStore();
+
+  if (!isHydrated) return null;
+
+  const isLoggedIn = !!token;
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-[0_-2px_10px_rgba(0,0,0,0.1)] lg:hidden safe-area-bottom">
+      <div className="mx-auto flex h-16 max-w-md items-center justify-around px-2">
+        {/* Pilihan Peran */}
+        <DropdownMenu.Root open={roleOpen} onOpenChange={setRoleOpen}>
+          <DropdownMenu.Trigger asChild>
+            <button
+              className={cn(
+                "flex flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-2 text-xs transition-all duration-200",
+                roleOpen
+                  ? "text-[#16A34A] font-semibold bg-[#16A34A]/10 scale-105"
+                  : "text-muted-foreground hover:text-foreground active:scale-95",
+              )}
+            >
+              <Users
+                className={cn(
+                  "size-5 transition-transform",
+                  roleOpen && "scale-110",
+                )}
+                strokeWidth={roleOpen ? 2.5 : 2}
+              />
+              <span className="text-[10px] font-medium max-w-[60px] text-center leading-tight">
+                {selectedRole ?? "Peran"}
+              </span>
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="start"
+              sideOffset={-8}
+              className="z-[60] mb-2 min-w-40 rounded-md border bg-background p-1 shadow-lg"
+            >
+              {roleItems.map((item) => (
+                <DropdownMenu.Item
+                  key={item.value}
+                  onSelect={() => {
+                    setRoleOpen(false);
+                    onRoleSelect(item);
+                  }}
+                  className="flex cursor-pointer items-center rounded-sm px-3 py-2.5 text-sm outline-none hover:bg-accent"
+                >
+                  {item.label}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+
+        {/* Notifikasi */}
+        {isLoggedIn ? (
+          <button
+            onClick={onNotifClick}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-2 text-xs text-muted-foreground transition-all duration-200 hover:text-foreground active:scale-95"
+          >
+            <Bell className="size-5" strokeWidth={2} />
+            <span className="text-[10px] font-medium">Notifikasi</span>
+          </button>
+        ) : (
+          <button
+            disabled
+            className="flex flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-2 text-xs text-muted-foreground/50 cursor-not-allowed"
+          >
+            <Bell className="size-5" strokeWidth={2} />
+            <span className="text-[10px] font-medium">Notifikasi</span>
+          </button>
+        )}
+
+        {/* Profile / Sign In */}
+        {isLoggedIn ? (
+          <DropdownMenu.Root open={profileOpen} onOpenChange={setProfileOpen}>
+            <DropdownMenu.Trigger asChild>
+              <button
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-2 text-xs transition-all duration-200",
+                  profileOpen
+                    ? "text-[#16A34A] font-semibold bg-[#16A34A]/10 scale-105"
+                    : "text-muted-foreground hover:text-foreground active:scale-95",
+                )}
+              >
+                <User
+                  className={cn(
+                    "size-5 transition-transform",
+                    profileOpen && "scale-110",
+                  )}
+                  strokeWidth={profileOpen ? 2.5 : 2}
+                />
+                <span className="text-[10px] font-medium">Profile</span>
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                align="end"
+                sideOffset={-8}
+                className="z-[60] mb-2 min-w-44 rounded-md border bg-background p-1 shadow-lg"
+              >
+                <DropdownMenu.Item
+                  onSelect={() => {
+                    setProfileOpen(false);
+                    onProfileClick();
+                  }}
+                  className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2.5 text-sm outline-none hover:bg-accent"
+                >
+                  <User className="size-4" />
+                  Detail Profile
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="my-1 h-px bg-border" />
+                <DropdownMenu.Item
+                  onSelect={() => {
+                    setProfileOpen(false);
+                    onProfileClick();
+                  }}
+                  className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2.5 text-sm outline-none hover:bg-accent text-destructive"
+                >
+                  <LogOut className="size-4" />
+                  Logout
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        ) : (
+          <button
+            onClick={onProfileClick}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-2 text-xs text-muted-foreground transition-all duration-200 hover:text-foreground active:scale-95"
+          >
+            <User className="size-5" strokeWidth={2} />
+            <span className="text-[10px] font-medium">Sign In</span>
+          </button>
+        )}
+      </div>
+    </nav>
+  );
+}
+
+// ─── SimpleHeader ────────────────────────────────────────────────────────────
 
 export function SimpleHeader() {
   const navigate = useNavigate();
-  const [open, setOpen] = React.useState(false);
-  const [expandedSection, setExpandedSection] = React.useState<string | null>(
-    null,
-  );
-  const [selectedperan, setSelectedperan] = React.useState<string | null>(null);
-  const [selectedLang, setSelectedLang] = React.useState<string | null>(null);
+  const [roleOpen, setRoleOpen] = React.useState(false);
+  const [profileOpen, setProfileOpen] = React.useState(false);
+  const [selectedRole, setSelectedRole] = React.useState<string | null>(null);
 
   const { token, isHydrated, logout } = useAuthStore();
 
   // Wait for persist to rehydrate
-  if (!isHydrated) return (
-    <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-lg">
-      <nav className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between px-4">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-          <img src="/Untitled-1j.png" alt="logo" width={32} height={32} />
-          <p className="text-lg font-black tracking-tight">serba</p>
-        </div>
-      </nav>
-    </header>
-  );
+  if (!isHydrated)
+    return (
+      <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-lg">
+        <nav className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between px-4">
+          <div
+            className="flex cursor-pointer items-center gap-2"
+            onClick={() => navigate("/")}
+          >
+            <img src="/Untitled-1j.png" alt="logo" width={32} height={32} />
+            <p className="text-lg font-black tracking-tight">serba</p>
+          </div>
+        </nav>
+        <BottomNav
+          selectedRole={null}
+          onRoleSelect={() => {}}
+          onProfileClick={() => navigate("/login")}
+          onNotifClick={() => {}}
+        />
+      </header>
+    );
 
   const isLoggedIn = !!token;
 
-  const peranItems = ["pemberi", "penerima"];
-  const idItems = ["eng", "中国", "id"];
-
-  const toggleSection = (section: string) => {
-    setExpandedSection((prev) => (prev === section ? null : section));
+  const handleRoleSelect = (item: (typeof roleItems)[number]) => {
+    setSelectedRole(item.label);
+    setRoleOpen(false);
+    if (!isLoggedIn) {
+      navigate("/login");
+    } else {
+      navigate(item.path);
+    }
   };
 
   const handleLogout = async () => {
     try {
-      await apiLogout(token);
+      if (token) await apiLogout(token);
     } catch {
       // ignore
     }
@@ -52,211 +222,111 @@ export function SimpleHeader() {
     navigate("/login", { replace: true });
   };
 
-  const handlePeranSelect = (item: string) => {
-    setSelectedperan(item);
-    if (!isLoggedIn) {
-      navigate("/login");
+  const handleProfileClick = () => {
+    if (isLoggedIn) {
+      navigate("/profile");
     } else {
-      // arahkan sesuai peran
-      navigate(item === "pemberi" ? "/r" : "/g");
+      navigate("/login");
     }
   };
 
   return (
-    <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-lg">
-      <nav className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between px-4">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => navigate("/")}
-        >
-          <img src="/Untitled-1j.png" alt="logo" width={32} height={32} />
-          <p className="text-lg font-black tracking-tight">serba</p>
-        </div>
-
-        {/* Desktop nav */}
-        <div className="hidden items-center gap-2 lg:flex">
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button variant="ghost">
-                {selectedperan ?? "peran"}
-                <ChevronDown className="ml-1 size-4" />
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content
-              align="start"
-              className="z-50 min-w-40 rounded-md border bg-background p-1 shadow-md"
-            >
-              {peranItems.map((item) => (
-                <DropdownMenu.Item
-                  key={item}
-                  onSelect={() => handlePeranSelect(item)}
-                  className="cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent"
-                >
-                  {item}
-                </DropdownMenu.Item>
-              ))}
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
-
-          {/* Notif hanya muncul jika sudah login */}
-          {isLoggedIn && (
-            <a className={buttonVariants({ variant: "ghost" })} href="#">
-              notif
-            </a>
-          )}
-
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button variant="ghost">{selectedLang ?? "id"}</Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content
-              align="start"
-              className="z-50 min-w-40 rounded-md border bg-background p-1 shadow-md"
-            >
-              {idItems.map((item) => (
-                <DropdownMenu.Item
-                  key={item}
-                  onSelect={() => setSelectedLang(item)}
-                  className="cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent"
-                >
-                  {item}
-                </DropdownMenu.Item>
-              ))}
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
-
-          <a className={buttonVariants({ variant: "ghost" })} href="#">
-            bantuan
-          </a>
-
-          {isLoggedIn ? (
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="mr-2 size-4" />
-              Keluar
-            </Button>
-          ) : (
-            <Button size="sm" onClick={() => navigate("/login")}>
-              Masuk
-            </Button>
-          )}
-        </div>
-
-        {/* Mobile sheet */}
-        <Sheet open={open} onOpenChange={setOpen}>
-          <Button size="icon" variant="outline" className="lg:hidden">
-            <MenuToggle
-              strokeWidth={2.5}
-              open={open}
-              onOpenChange={setOpen}
-              className="size-6"
-            />
-          </Button>
-
-          <SheetContent
-            side="left"
-            showClose={false}
-            className="bg-background/95 supports-backdrop-filter:bg-background/80 gap-0 backdrop-blur-lg"
+    <>
+      <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-lg">
+        <nav className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between px-4">
+          <div
+            className="flex cursor-pointer items-center gap-2"
+            onClick={() => navigate("/")}
           >
-            <div className="grid gap-y-1 overflow-y-auto px-4 pt-12 pb-5">
-              <Button
-                variant="ghost"
-                className="justify-between"
-                onClick={() => toggleSection("peran")}
-              >
-                {selectedperan ?? "peran"}
-                <ChevronDown
-                  className={`size-4 transition-transform duration-200 ${
-                    expandedSection === "peran" ? "rotate-180" : ""
-                  }`}
-                />
-              </Button>
-              {expandedSection === "peran" && (
-                <div className="ml-3 grid gap-y-1 border-l pl-3">
-                  {peranItems.map((item) => (
-                    <Button
-                      key={item}
-                      variant="ghost"
-                      onClick={() => {
-                        setOpen(false);
-                        handlePeranSelect(item);
-                      }}
-                      className="justify-start text-muted-foreground"
-                    >
-                      {item}
-                    </Button>
-                  ))}
-                </div>
-              )}
+            <img src="/Untitled-1j.png" alt="logo" width={32} height={32} />
+            <p className="text-lg font-black tracking-tight">serba</p>
+          </div>
 
-              {isLoggedIn && (
-                <a
-                  className={buttonVariants({
-                    variant: "ghost",
-                    className: "justify-start",
-                  })}
-                  href="#"
-                >
-                  notif
-                </a>
-              )}
+          {/* Desktop nav */}
+          <div className="hidden items-center gap-2 lg:flex">
+            <DropdownMenu.Root open={roleOpen} onOpenChange={setRoleOpen}>
+              <DropdownMenu.Trigger asChild>
+                <Button variant="ghost">
+                  {selectedRole ?? "Pilihan Peran"}
+                  <ChevronDown className="ml-1 size-4" />
+                </Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content
+                align="start"
+                className="z-50 min-w-40 rounded-md border bg-background p-1 shadow-md"
+              >
+                {roleItems.map((item) => (
+                  <DropdownMenu.Item
+                    key={item.value}
+                    onSelect={() => handleRoleSelect(item)}
+                    className="cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent"
+                  >
+                    {item.label}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
 
-              <Button
-                variant="ghost"
-                className="justify-between"
-                onClick={() => toggleSection("id")}
-              >
-                {selectedLang ?? "id"}
-                <ChevronDown
-                  className={`size-4 transition-transform duration-200 ${
-                    expandedSection === "id" ? "rotate-180" : ""
-                  }`}
-                />
-              </Button>
-              {expandedSection === "id" && (
-                <div className="ml-3 grid gap-y-1 border-l pl-3">
-                  {idItems.map((item) => (
-                    <Button
-                      key={item}
-                      variant="ghost"
-                      onClick={() => setSelectedLang(item)}
-                      className="justify-start text-muted-foreground"
-                    >
-                      {item}
-                    </Button>
-                  ))}
-                </div>
-              )}
-              <a
-                className={buttonVariants({
-                  variant: "ghost",
-                  className: "justify-start",
-                })}
-                href="#"
-              >
-                bantuan
+            {isLoggedIn && (
+              <a className={buttonVariants({ variant: "ghost" })} href="#">
+                Notifikasi
               </a>
-            </div>
+            )}
 
-            <SheetFooter>
-              {isLoggedIn ? (
-                <Button variant="outline" onClick={handleLogout}>
-                  <LogOut className="mr-2 size-4" />
-                  Keluar
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => {
-                    setOpen(false);
-                    navigate("/login");
-                  }}
+            <a className={buttonVariants({ variant: "ghost" })} href="#">
+              Bantuan
+            </a>
+
+            {/* Profile / Masuk */}
+            {isLoggedIn ? (
+              <DropdownMenu.Root open={profileOpen} onOpenChange={setProfileOpen}>
+                <DropdownMenu.Trigger asChild>
+                  <Button variant="ghost">
+                    <User className="mr-2 size-4" />
+                    Profile
+                    <ChevronDown className="ml-1 size-4" />
+                  </Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content
+                  align="end"
+                  className="z-50 min-w-48 rounded-md border bg-background p-1 shadow-md"
                 >
-                  Masuk / Daftar
-                </Button>
-              )}
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-      </nav>
-    </header>
+                  <DropdownMenu.Item
+                    onSelect={() => {
+                      setProfileOpen(false);
+                      navigate("/profile");
+                    }}
+                    className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent"
+                  >
+                    <User className="size-4" />
+                    Detail Profile
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator className="my-1 h-px bg-border" />
+                  <DropdownMenu.Item
+                    onSelect={handleLogout}
+                    className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent text-destructive"
+                  >
+                    <LogOut className="size-4" />
+                    Logout
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            ) : (
+              <Button size="sm" onClick={() => navigate("/login")}>
+                Masuk
+              </Button>
+            )}
+          </div>
+        </nav>
+      </header>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav
+        selectedRole={selectedRole}
+        onRoleSelect={handleRoleSelect}
+        onProfileClick={handleProfileClick}
+        onNotifClick={() => {}}
+      />
+    </>
   );
 }

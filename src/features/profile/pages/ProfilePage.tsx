@@ -2,7 +2,16 @@
 
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, Star, MapPin, Phone, Mail, Calendar, Shield, LogOut } from "lucide-react";
+import {
+  Camera,
+  Star,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
+  Shield,
+  LogOut,
+} from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { getProfile, getUserReviews } from "@/lib/services/user.service";
@@ -43,7 +52,7 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     try {
-      await apiLogout(token);
+      if (token) await apiLogout(token);
     } catch {
       // ignore
     }
@@ -71,7 +80,10 @@ export default function ProfilePage() {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={clsx("size-4", i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300")}
+        className={clsx(
+          "size-4",
+          i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300",
+        )}
       />
     ));
   };
@@ -85,7 +97,11 @@ export default function ProfilePage() {
           <div className="relative">
             <div className="h-24 w-24 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
               {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="avatar" className="h-full w-full object-cover" />
+                <img
+                  src={profile.avatarUrl}
+                  alt="avatar"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <span className="text-4xl font-bold text-white">
                   {profile.firstName?.[0] || profile.username?.[0] || "?"}
@@ -140,7 +156,7 @@ export default function ProfilePage() {
             "flex-1 pb-3 text-sm font-medium transition-colors",
             activeTab === "info"
               ? "border-b-2 border-[#16A34A] text-[#16A34A]"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         >
           Informasi
@@ -151,7 +167,7 @@ export default function ProfilePage() {
             "flex-1 pb-3 text-sm font-medium transition-colors",
             activeTab === "reviews"
               ? "border-b-2 border-[#16A34A] text-[#16A34A]"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         >
           Review
@@ -199,7 +215,9 @@ export default function ProfilePage() {
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted-foreground">Tanggal Lahir</p>
-                <p className="text-sm font-medium">{profile.birthDate || "-"}</p>
+                <p className="text-sm font-medium">
+                  {profile.birthDate || "-"}
+                </p>
               </div>
             </div>
 
@@ -228,7 +246,10 @@ export default function ProfilePage() {
           <div className="space-y-4">
             {reviews?.data?.length > 0 ? (
               reviews.data.map((review: any) => (
-                <div key={review.id} className="rounded-lg bg-white p-4 shadow-sm border">
+                <div
+                  key={review.id}
+                  className="rounded-lg bg-white p-4 shadow-sm border"
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-1">
@@ -245,7 +266,9 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   {review.comment && (
-                    <p className="mt-2 text-sm text-foreground">{review.comment}</p>
+                    <p className="mt-2 text-sm text-foreground">
+                      {review.comment}
+                    </p>
                   )}
                 </div>
               ))
