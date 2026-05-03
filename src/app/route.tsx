@@ -10,6 +10,7 @@ import VerifyPhonePage from "@/features/auth/pages/VerifyPhone";
 import CompleteProfilePage from "@/features/auth/pages/CompleteProfile";
 import PenerimaPage from "@/features/auth/pages/Penerima";
 import PemberiPage from "@/features/auth/pages/Pemberi";
+import ProfilePage from "@/features/profile/pages/ProfilePage";
 
 import MainLayout from "./layouts/MainLAy";
 import AuthLayout from "./layouts/AuthLAy";
@@ -24,13 +25,14 @@ export default function AppRoutes() {
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
       </Route>
 
-      {/* MAIN (dengan navbar) */}
+      {/* MAIN (dengan navbar & bottom nav) */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<LandingPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/r" element={<PenerimaPage />} />
           <Route path="/g" element={<PemberiPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
 
