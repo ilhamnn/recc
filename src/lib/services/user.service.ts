@@ -1,4 +1,5 @@
 import { API } from "@/lib/api";
+import { data } from "react-router-dom";
 
 export const getCurrentUser = async () => {
   const res = await API.get("/api/users/current");
@@ -7,11 +8,29 @@ export const getCurrentUser = async () => {
 
 export const getProfile = async () => {
   const res = await API.get("/api/users/profile");
+  console.log(res.data);
   return res.data;
 };
 
-export const getUserReviews = async (params?: { rating?: number; as?: string; page?: number; size?: number }) => {
-  const res = await API.get("/api/users/reviews", { params });
+// ─── Reviews ──────────────────────────────────────────────────────────────
+// Contract: GET /api/reviews          → reviews milik sendiri (16.3.1)
+// Contract: GET /api/users/:userId/reviews → reviews user lain (16.3.2)
+
+export const getMyReviews = async (params?: {
+  rating?: number;
+  as?: string;
+  page?: number;
+  size?: number;
+}) => {
+  const res = await API.get("/api/reviews", { params });
+  return res.data;
+};
+
+export const getUserReviews = async (
+  userId: string,
+  params?: { rating?: number; as?: string; page?: number; size?: number },
+) => {
+  const res = await API.get(`/api/users/${userId}/reviews`, { params });
   return res.data;
 };
 
