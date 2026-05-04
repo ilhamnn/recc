@@ -11,10 +11,20 @@ import {
   Calendar,
   Shield,
   LogOut,
+  Upload,
+  CameraOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/navBase/sheet";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { getProfile } from "@/lib/services/user.service";
+import { updateProfilePicture } from "@/lib/services/user.service";
 import { logout as apiLogout } from "@/lib/services/auth.service";
 import clsx from "clsx";
 
@@ -150,6 +160,9 @@ export default function ProfilePage() {
   const [profile, setProfile] = React.useState<Profile | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<"info" | "reviews">("info");
+  const [uploading, setUploading] = React.useState(false);
+  const [sheetOpen, setSheetOpen] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // ─── Load Data ─────────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -184,6 +197,54 @@ export default function ProfilePage() {
     }
     storeLogout();
     navigate("/login", { replace: true });
+  };
+
+  // ─── Upload Profile Picture ───────────────────────────────────────────────
+  const handleCameraOption = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.setAttribute("capture", "environment");
+    fileInputRef.current.click();
+  };
+
+  const handleGalleryOption = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.removeAttribute("capture");
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // ✅ Sesuai backend: max 2MB (bukan 5MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Ukuran file maksimal 2MB");
+      return;
+    }
+
+    // validasi tipe tetap sama
+    if (!file.type.startsWith("image/")) {
+      alert("Hanya file gambar yang diizinkan");
+      return;
+    }
+
+    setSheetOpen(false);
+    setUploading(true);
+
+    try {
+      await updateProfilePicture(file);
+      const res = await getProfile();
+      const data = (res as ProfileResponse).data;
+      setProfile(data);
+    } catch (err: any) {
+      console.error("Failed to upload profile picture", err);
+      const errorMsg =
+        err?.apiMessage || err?.message || "Gagal mengunggah foto profil";
+      alert(errorMsg);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   // ─── Loading State ─────────────────────────────────────────────────────────
@@ -260,9 +321,67 @@ export default function ProfilePage() {
                 </span>
               )}
             </div>
-            <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg">
-              <Camera className="size-4 text-gray-700" />
-            </button>
+
+            {/* Hidden file input for camera/gallery */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            {/* Uploading overlay */}
+            {uploading && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              </div>
+            )}
+
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+              <SheetTrigger asChild>
+                <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg">
+                  <Camera className="size-4 text-gray-700" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="rounded-t-2xl pb-8">
+                <SheetHeader>
+                  <SheetTitle>Ubah Foto Profil</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4 flex flex-col gap-3 px-4">
+                  <button
+                    onClick={handleCameraOption}
+                    disabled={uploading}
+                    className="flex items-center gap-3 rounded-lg border p-4 text-left transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#16A34A]/10">
+                      <CameraOff className="size-6 text-[#16A34A]" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Ambil Foto</p>
+                      <p className="text-sm text-muted-foreground">
+                        Gunakan kamera untuk foto baru
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={handleGalleryOption}
+                    disabled={uploading}
+                    className="flex items-center gap-3 rounded-lg border p-4 text-left transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#16A34A]/10">
+                      <Upload className="size-6 text-[#16A34A]" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Pilih dari Galeri</p>
+                      <p className="text-sm text-muted-foreground">
+                        Unggah foto dari perangkat
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
           {/* Name */}
@@ -427,9 +546,7 @@ export default function ProfilePage() {
                   <Calendar className="size-5 text-[#16A34A]" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">
-                    Tanggal Lahir
-                  </p>
+                  <p className="text-xs text-muted-foreground">Tanggal Lahir</p>
                   <p className="text-sm font-medium">
                     {formatDate(profile.birthDate)}
                   </p>
