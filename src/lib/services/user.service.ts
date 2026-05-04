@@ -34,6 +34,15 @@ export const getUserReviews = async (
   return res.data;
 };
 
+export const updateProfilePicture = async (file: File) => {
+  const formData = new FormData();
+  formData.append("profilePict", file);
+  const res = await API.patch("/api/users/profilePicture", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
 export const updateUser = async (data: FormData) => {
   const res = await API.patch("/api/users", data, {
     headers: { "Content-Type": "multipart/form-data" },
