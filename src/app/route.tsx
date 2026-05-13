@@ -11,6 +11,7 @@ import CompleteProfilePage from "@/features/auth/pages/CompleteProfile";
 import PenerimaPage from "@/features/auth/pages/Penerima";
 import PemberiPage from "@/features/auth/pages/Pemberi";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
+import AddTawaranPage from "@/features/auth/pages/AddTawaran";
 
 import MainLayout from "./layouts/MainLAy";
 import AuthLayout from "./layouts/AuthLAy";
@@ -31,6 +32,7 @@ export default function AppRoutes() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/r" element={<PenerimaPage />} />
+          <Route path="/r/add" element={<AddTawaranPage />} />
           <Route path="/g" element={<PemberiPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
