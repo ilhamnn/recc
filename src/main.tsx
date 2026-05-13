@@ -1,6 +1,7 @@
 import ReactDOM from "react-dom/client";
 import App from "./app/App.tsx";
 import "./index.css";
+import "leaflet/dist/leaflet.css";
 import { BrowserRouter } from "react-router-dom";
 import React from "react";
 

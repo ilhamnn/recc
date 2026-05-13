@@ -43,10 +43,13 @@ export const updateProfilePicture = async (file: File) => {
   return res.data;
 };
 
-export const updateUser = async (data: FormData) => {
-  const res = await API.patch("/api/users", data, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+export const updateUser = async (data: {
+  username?: string;
+  birthDate?: string;
+  firstName?: string;
+  lastName?: string;
+}) => {
+  const res = await API.patch("/api/users", data);
   return res.data;
 };
 
@@ -65,8 +68,7 @@ export const sendPhoneOtp = async (phone: string) => {
   return res.data;
 };
 
-export const verifyPhoneOtp = async (phone: string, otp: string) => {
-  const res = await API.post("/api/otp/phone/verify", { phone, otp });
-  console.log(res);
+export const verifyPhoneOtp = async (otp: string) => {
+  const res = await API.post("/api/otp/phone/verify", { otp });
   return res.data;
 };

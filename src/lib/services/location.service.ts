@@ -59,14 +59,30 @@ export const createAddress = async (data: {
   subdistrictId: string;
   street?: string;
   postalCode?: string;
-  benchmark?: string;
   markAs?: string;
   isPrimary?: boolean;
-  lat?: number;
-  lng?: number;
+  lat?: string;
+  lng?: string;
 }) => {
-  const res = await API.post("/api/addresses", data);
-  return res.data;
+  const payload: Record<string, string | boolean> = {};
+  if (data.subdistrictId) payload.subdistrictId = data.subdistrictId;
+  if (data.street) payload.street = data.street;
+  if (data.postalCode) payload.postalCode = data.postalCode;
+  if (data.markAs) payload.markAs = data.markAs;
+  if (data.isPrimary != null) payload.isPrimary = data.isPrimary;
+  if (data.lat) payload.lat = data.lat;
+  if (data.lng) payload.lng = data.lng;
+  console.log("createAddress payload sent to API:", JSON.stringify(payload, null, 2));
+  try {
+    const res = await API.post("/api/addresses", payload);
+    console.log(res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error("createAddress ERROR:", err.response?.status);
+    console.error("createAddress ERROR data:", JSON.stringify(err.response?.data, null, 2));
+    console.error("createAddress ERROR headers:", err.response?.headers);
+    throw err;
+  }
 };
 
 export const updateAddress = async (addressId: string, data: Record<string, any>) => {

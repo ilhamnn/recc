@@ -15,6 +15,7 @@ API Documentation untuk platform marketplace jasa harian dengan sistem dual-role
 - [Cities](#master-cities)
 - [Districts](#master-districts)
 - [Sub Districts](#master-subdistricts)
+- [Geocoding](#Geocoding)
 - [Addresses](#addresses)
 - [Job Categories](#job-categories)
 - [Skills](#skills-belum)
@@ -95,7 +96,6 @@ Membuat akun pengguna baru.
 | `birthDate`   | Text | Yes      | Format: YYYY-MM-DD                                                                                                             |
 | `phone`       | Text | Yes      | Format: +62xxxxxxxxx                                                                                                           |
 
-
 **Response:** `201 Created`
 
 ```json
@@ -151,9 +151,9 @@ Login untuk mendapatkan JWT token.
   "message": "Login successful",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "isEmailCompleted": false or undifined,
-    "isPhoneCompleted": false or undifined,
-    "isBirthDateCompleted": false or undifined
+    "isEmailVerified": true or undifined,
+    "isPhoneVerified": true or undifined,
+    "isBirthDateVerified": true or undifined
   }
 }
 ```
@@ -171,7 +171,7 @@ Login untuk mendapatkan JWT token.
 ### 1.3 Renew access token (public)
 
 Renew access token yang sudah EXP untuk generate token baru, selama refresh token masih berlaku  
-**Endpoint:** `POST /public/api/auth/refresh`  
+**Endpoint:** `POST /public/api/auth/refresh`
 
 **Response:** `200 OK`
 
@@ -218,12 +218,13 @@ Logout untuk keluar aplikasi.
 ---
 
 # Continue With Google (Public)
+
 ### 1.2.1 URL Authorize
 
 **Endpoint:** `GET /public/api/auth/google`
 
 **Query params:**
-| Key     | Type   | Required | Description |
+| Key | Type | Required | Description |
 |---------|--------|----------|-------------|
 | `redirectPath` | string | Yes | redirect setelah login, ex: `/auth/profile`|
 
@@ -235,7 +236,8 @@ User akan langsung diarahkan ke Google OAuth consent screen `https://accounts.go
       state=eyJhbGc... ← STATE TOKEN KIRIM KE GOOGLE
       access_type=offline`
 
-**Response:** `400 Bad Request`  
+**Response:** `400 Bad Request`
+
 ```json
 {
   "success": false,
@@ -246,41 +248,43 @@ User akan langsung diarahkan ke Google OAuth consent screen `https://accounts.go
 
 ### 1.2.2 Google callback
 
-**Endpoint:** `GET /public/api/auth/google/callback`  
+**Endpoint:** `GET /public/api/auth/google/callback`
 
 **Query params:**
-| Key     | Type   | Required | Description |
+| Key | Type | Required | Description |
 |---------|--------|----------|-------------|
-| `code`  | string | Yes      | Authorization code dari Google |
-| `state` | string | Yes      | State untuk validasi dan redirectPath |
+| `code` | string | Yes | Authorization code dari Google |
+| `state` | string | Yes | State untuk validasi dan redirectPath |
 
-**Response:** `302 Redirect`  
+**Response:** `302 Redirect`
+
 - Sukses — user diarahkan ke url frontend: `${config.FRONTEND_URL}${payload.redirect}?accessToken=${accessToken}&isBirthDateCompleted=${user.birthDate ? true : false}&isPhoneCompleted=${user.isPhoneVerified === true && user.phoneVerifiedAt ? true : false}`
 
 - Error — user diarahkan ke halaman login dengan query param `error`: `${config.FRONTEND_URL}/auth/login?error={errorCode}`
 
 **Error codes:**
 
-| `error` | reason |
-|---------|----------|
-| `missing_params` | `code` atau `state` tidak ada di query params |
-| `account_blocked` | Akun user telah diblokir |
-| `invalid_state` | State di query tidak cocok dengan cookie |
-| `invalid_state_token` | State token tidak valid atau sudah expired |
-| `state_used` | State token sudah pernah dipakai (replay attack) |
-| `no_id_token` | Google tidak mengembalikan id_token |
+| `error`                  | reason                                             |
+| ------------------------ | -------------------------------------------------- |
+| `missing_params`         | `code` atau `state` tidak ada di query params      |
+| `account_blocked`        | Akun user telah diblokir                           |
+| `invalid_state`          | State di query tidak cocok dengan cookie           |
+| `invalid_state_token`    | State token tidak valid atau sudah expired         |
+| `state_used`             | State token sudah pernah dipakai (replay attack)   |
+| `no_id_token`            | Google tidak mengembalikan id_token                |
 | `invalid_google_payload` | Payload dari Google tidak valid atau tidak lengkap |
 
 **Catatan:**
+
 - Endpoint ini dipanggil otomatis oleh Google setelah user approve consent screen
 - Jangan dipanggil langsung dari frontend
 - State token hanya bisa dipakai 1x (one-time use) untuk mencegah replay attack
 - Cookie `state_token` akan dihapus setelah callback selesai
 
-
 ---
 
 # Phone Verification
+
 ### 1.3.1 OTP phone
 
 **Endpoint:** `POST /api/otp/phone/send`  
@@ -338,7 +342,7 @@ User akan langsung diarahkan ke Google OAuth consent screen `https://accounts.go
 
 ### 1.3.2 Verify phone
 
-**Endpoint:** `POSTA /api/otp/phone/verify`  
+**Endpoint:** `GET /api/otp/phone/verify`  
 **Request Body (application/json):**
 
 ```json
@@ -407,6 +411,7 @@ User akan langsung diarahkan ke Google OAuth consent screen `https://accounts.go
 # Email Verification
 
 ### 1.4.1 LINK to email (public)
+
 send email verification ke email user saat setelah register
 **Endpoint:** `POST /public/api/emailVerifications/send-verification`  
 **Request body:**
@@ -472,6 +477,7 @@ send email verification ke email user saat setelah register
 ```
 
 ### 1.4.2 Verify email (public)
+
 verifikasi email user menggunakan token dari send email
 **Endpoint:** `GET /public/api/emailVerifications/verify`  
 **Query param:**
@@ -513,8 +519,7 @@ verifikasi email user menggunakan token dari send email
 
 problem [User error]: semisal user saat ingin validasi email tetapi tidak sengaja keluar dari halaman verification dan verifikasi di email sudah kadaluwarsa
 
-solusi: user bisa login, dan untuk response di login yang sebelumnya hanya access token ditambah isEmailVerified, jadi saat  isEmailVerified = false maka FE akan direct ke halaman verifikasi email
-
+solusi: user bisa login, dan untuk response di login yang sebelumnya hanya access token ditambah isEmailVerified, jadi saat isEmailVerified = false maka FE akan direct ke halaman verifikasi email
 
 // JIKA PHONE DAN EMAIL USER SUDAH VERIFIED UBAH user status = ACTIVE
 
@@ -1479,6 +1484,86 @@ Membuat desa.
 
 ---
 
+# Geocoding
+
+### 7.2.1
+**Endpoint:** `GET /api/geocoding`  
+**Request Header:**
+
+- **Authorization: Bearer <token> (accessToken)**
+
+**Query Param:**
+| Key           | Type   | Required | Description                           | 
+| ------------- | ------ | -------- | ------------------------------------- |
+| `street`      | string | No       | Nama jalan                            |                   
+| `subDistrict` | string | No       | Nama kelurahan/desa                   |                   
+| `district`    | string | No       | Nama kecamatan                        |                   
+| `city`        | string | No       | Nama kota/kabupaten                   |                   
+| `province`    | string | No       | Nama provinsi                         |                   
+| `postalCode`  | string | No       | Nama Kode pos (5 digit)               |                   
+
+> Note: Semakin lengkap field yang diisi → hasil geocoding semakin akurat. Urutan query yang digabung di service sudah diurutkan dari spesifik → umum (street → province) agar Nominatim lebih mudah mengenali lokasi.
+
+**Response:** `200 Success`
+```json
+{
+  "success": true,
+  "message": "Search Geocoding successful",
+  "data": [
+      {
+          "lat": "-7.4478349",
+          "lng": "112.7183490",
+          "displayName": "Sidoarjo, Kabupaten Sidoarjo, Jawa Timur, Indonesia"
+      },
+      {
+          "lat": "-7.4500123",
+          "lng": "112.7200456",
+          "displayName": "Sidoarjo, Kecamatan Sidoarjo, Kabupaten Sidoarjo, Jawa Timur, Indonesia"
+      }
+  ]
+}
+```
+
+**Response:** `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "message": "bad request",
+  "errors": "Address must be at least 3 characters"
+}
+```
+**Response:** `404 Not Found`
+
+```json
+{
+  "success": false,
+  "message": "not found",
+  "errors": "Address not found"
+}
+```
+**Response:** `429 Too Many Requests`
+
+```json
+{
+  "success": false,
+  "message": "Too many requests",
+  "errors": "Too many requests, please try again in 2 minutes",
+  "retryAfter": 120
+}
+```
+**Response:** `502 Bad Gateway`
+
+```json
+{
+  "success": false,
+  "message": "Bad Gateway",
+  "errors": "Geocoding service unavailable"
+}
+```
+
+---
+
 # Addresses
 
 set isPrimary = true saat pertama kali buat addresses dan saat user membuat alamat lagi set isPrimary = false
@@ -1501,8 +1586,8 @@ Membuat alamat pengguna.
   "benchmark": "depan tugu",
   "markAs": "home",
   "isPrimary": true,
-  "lat": -6.0,
-  "lng": 5.33333
+  "lat": "-6.0",
+  "lng": "5.33333"
 }
 ```
 
@@ -1517,8 +1602,8 @@ Membuat alamat pengguna.
     "street": "Jln. Subroto No. 4",
    	"country": "Indonesia",
     "postalCode": "xxxxx",
-    "lat": -6.00000,
-    "lng": 5.33333,
+    "lat": "-6.0",
+    "lng": "5.33333",
     "isPrimary": true,
     "locations": {
       "subdistrict": {
@@ -1577,8 +1662,8 @@ mendapatkan address user saat ini
       "street": "Jln. Subroto No. 4",
       "country": "Indonesia",
       "postalCode": "xxxxx",
-      "lat": -6.00000,
-      "lng": 5.33333,
+      "lat": "-6.0",
+      "lng": "5.33333",
       "isPrimary": "true",
       "locations": {
         "subdistrict": {
@@ -1650,8 +1735,8 @@ mendapatkan address user saat ini
     "street": "Jln. Subroto No. 4",
     "country": "Indonesia",
     "postalCode": "xxxxx",
-    "lat": -6.00000,
-    "lng": 5.33333,
+    "lat": "-6.0",
+    "lng": "5.33333",
     "isPrimary": "true",
     "locations": {
       "subdistrict": {
@@ -1719,8 +1804,8 @@ Update alamat pengguna berdasarkan id address tertentu.
   "isPrimary": true,
   "benchmark": "...",
   "markAs": "Office",
-  "lat": -6.0,
-  "lng": 5.33333
+  "lat": "-6.0",
+  "lng": "5.33333",
 }
 ```
 
@@ -1735,8 +1820,8 @@ Update alamat pengguna berdasarkan id address tertentu.
     "street": "jln. soekarno hatta",
     "postaCode": "xxxxx",
     "subDistrictId": "id-fk-subDistrict",
-    "lat": -6.00000,
-    "lng": 5.33333,
+    "lat": "-6.0",
+    "lng": "5.33333",
     "isPrimary": true,
     "benchmark": "......",
     "markAs": "Office",
@@ -2441,8 +2526,8 @@ User membuat/posting job baru.
     "addressId": "uuid-fk-address",
     "isPublic": true,
     "location": {
-      "lat": -6.00000,
-      "lng": 5.33333,
+      "lat": "-6.0",
+      "lng": "5.33333",
       "street": "Jln. semangka",
       "postalCode": "xxxxx",
       "masterLocation": {
@@ -2535,8 +2620,8 @@ User membuat/posting job baru.
       "location": {
         "street": "Jln. semangka",
         "postalCode": "xxxxx",
-        "lat": -6.00000,
-        "lng": 5.33333,
+        "lat": "-6.0",
+        "lng": "5.33333",
         "subdistrict": {
           "id": "subdistrict-id",
           "name": "Keude Bakongan",
@@ -2624,8 +2709,8 @@ Menampilkan daftar job yang dibuat oleh provider.
       "location": {
         "street": "Jln. semangka",
         "postalCode": "xxxxx",
-        "lat": -6.00000,
-        "lng": 5.33333,
+        "lat": "-6.0",
+      "lng": "5.33333",
         "subdistrict": {
           "id": "subdistrict-id",
           "name": "Keude Bakongan",
@@ -2735,8 +2820,8 @@ Menampilkan daftar job dengan filter dan pagination.
       "location": {
         "street": "Jln. semangka",
         "postalCode": "xxxxx",
-        "lat": -6.00000,
-        "lng": 5.33333,
+        "lat": "-6.0",
+        "lng": "5.33333",
         "subdistrict": {
           "id": "subdistrict-id",
           "name": "Keude Bakongan",
@@ -2874,8 +2959,8 @@ user Mendapatkan detail lengkap sebuah job berdasarkan id job
     "location": {
       "street": "Jln. semangka",
       "postalCode": "xxxxx",
-      "lat": -6.00000,
-      "lng": 5.33333,
+      "lat": "-6.0",
+      "lng": "5.33333",
       "subdistrict": {
         "id": "subdistrict-id",
         "name": "Keude Bakongan",
@@ -2989,8 +3074,8 @@ provider update job yang diposting.
     "location": {
       "street": "Jln. semangka",
       "postalCode": "xxxxx",
-      "lat": -6.00000,
-      "lng": 5.33333,
+      "lat": "-6.0",
+      "lng": "5.33333",
       "subdistrict": {
         "id": "subdistrict-id",
         "name": "Keude Bakongan",

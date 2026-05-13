@@ -144,8 +144,7 @@ export default function VerifyPhonePage() {
 
     setOtpLoading(true);
     try {
-      const normalizedPhone = phone.replace(/^0/, "+62");
-      await verifyPhoneOtp(normalizedPhone, otp);
+      await verifyPhoneOtp(otp);
       setOtpVerified(true);
       if (resendTimerRef.current) clearInterval(resendTimerRef.current);
       if (otpExpiryTimerRef.current) clearInterval(otpExpiryTimerRef.current);

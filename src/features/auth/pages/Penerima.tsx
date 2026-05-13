@@ -1,59 +1,133 @@
-import { useState } from "react";
-import { Search, Trash2, Pencil, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, Trash2, Pencil, Zap, Plus } from "lucide-react";
 import Sidepenerima from "../components/sidebarpen";
+import { getProviderJobs, deleteJob } from "@/lib/services/jobs.service";
 
-const jobData = [
-  {
-    id: 1,
-    title: "Kitchen Staff coffe shop",
-    pay: "Rp 50.000 - 100.000 per day",
-    tags: ["weekend helper", "washing station"],
-    date: "1/7/2025",
-    status: "prog",
-    featured: false,
-  },
-  {
-    id: 2,
-    title: "Kitchen Staff coffe shop",
-    pay: "Rp 50.000 - 100.000 per day",
-    tags: ["weekend helper", "washing station"],
-    date: "1/7/2026",
-    status: "open",
-    applicants: 100,
-    featured: true,
-  },
-  {
-    id: 3,
-    title: "Kitchen Staff coffe shop",
-    pay: "Rp 50.000 - 100.000 per day",
-    tags: ["weekend helper", "washing station"],
-    date: "1/7/2026",
-    status: "closed",
-    featured: false,
-  },
-  {
-    id: 4,
-    title: "Kitchen Staff coffe shop",
-    pay: "Rp 50.000 - 100.000 per day",
-    tags: ["weekend helper", "washing station"],
-    date: "1/7/2026",
-    status: "closed",
-    featured: false,
-  },
-];
+interface JobCategory {
+  jobCategoryId: string;
+  name: string;
+}
+
+interface Location {
+  street?: string;
+  postalCode?: string;
+  subdistrict?: { name: string };
+  district?: { name: string };
+  city?: { name: string };
+  province?: { name: string };
+}
+
+interface Job {
+  id: string;
+  title: string;
+  introduction?: string;
+  isPublic: boolean;
+  location: Location;
+  type: string;
+  jobSite: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  budgetType?: string;
+  status: string;
+  jobAge?: string;
+  jobCategories: JobCategory[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Paging {
+  currentPage: number;
+  totalPage: number;
+  totalElement: number;
+  size: number;
+  nextPage: boolean;
+  previousPage: boolean;
+  firstPage: boolean;
+  lastPage: boolean;
+}
+
+interface ApiResponse {
+  success: boolean;
+  message: string;
+  data: Job[];
+  paging: Paging;
+}
+
+const formatBudget = (min?: number, max?: number, type?: string) => {
+  if (!min && !max) return null;
+  const formatNum = (n: number) =>
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(n);
+
+  if (min && max)
+    return `${formatNum(min)} - ${formatNum(max)} per ${type?.toLowerCase() || "day"}`;
+  if (min) return `${formatNum(min)} per ${type?.toLowerCase() || "day"}`;
+  return `${formatNum(max!)} per ${type?.toLowerCase() || "day"}`;
+};
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 const statusColor: Record<string, string> = {
-  prog: "text-yellow-600",
   open: "text-green-600",
-  closed: "text-red-500",
+  in_progress: "text-yellow-600",
+  canceled: "text-red-500",
+  closed: "text-gray-500",
 };
 
 export const TawaranContent = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filtered = jobData.filter((j) =>
-    j.title.toLowerCase().includes(search.toLowerCase()),
-  );
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const res: ApiResponse = await getProviderJobs({ page: 1, size: 20 });
+        if (res.success) {
+          setJobs(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch jobs:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  const handleDelete = async (jobId: string) => {
+    if (!confirm("Yakin ingin menghapus job ini?")) return;
+    try {
+      setDeletingId(jobId);
+      await deleteJob(jobId);
+      setJobs((prev) => prev.filter((j) => j.id !== jobId));
+    } catch (err) {
+      console.error("Failed to delete job:", err);
+      alert("Gagal menghapus job");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const filtered = Array.isArray(jobs)
+    ? jobs.filter((j) =>
+        (j.title ?? "").toLowerCase().includes(search.toLowerCase()),
+      )
+    : [];
 
   return (
     <div className="flex min-h-screen bg-[#f5f2ec]">
@@ -66,84 +140,119 @@ export const TawaranContent = () => {
         <p className="text-xs text-[#9a9688] mb-3 sm:mb-4">
           home &gt; recipient
         </p>
-
-        {/* Header */}
+        {/* Header */} {/* ✅ FIXED: Removed duplicate h1 and wrapper div */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <h1 className="text-lg sm:text-xl font-bold text-[#2d2d25]">
             Job Tawaran Anda
           </h1>
 
-          <div className="relative w-full sm:w-56">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="cari tawaranmu..."
-              className="w-full pl-3 pr-8 py-2 rounded-full bg-[#16A34A] text-white placeholder-green-200 text-sm outline-none"
-            />
-            <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-green-200" />
-          </div>
-        </div>
-
-        {/* Cards */}
-        <div className="space-y-3">
-          {filtered.map((job) => (
-            <div
-              key={job.id}
-              className="relative bg-white rounded-xl border border-[#e2ddd6] p-4 sm:p-5 hover:shadow-sm transition"
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate("/r/add")}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#16A34A] hover:bg-[#158a3a] text-white text-xs font-medium transition"
             >
-              {job.featured && (
-                <div className="absolute top-3 right-3 bg-green-500 rounded-lg p-1.5">
-                  <Zap className="h-4 w-4 text-white fill-white" />
-                </div>
-              )}
+              <Plus className="h-3.5 w-3.5" />
+              Tambah
+            </button>
 
-              <h2 className="text-sm sm:text-base font-bold text-[#2d2d25] mb-0.5">
-                {job.title}
-              </h2>
+            <div className="relative w-full sm:w-56">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="cari tawaranmu..."
+                className="w-full pl-3 pr-8 py-2 rounded-full bg-[#16A34A] text-white placeholder-green-200 text-sm outline-none"
+              />
+              <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-green-200" />
+            </div>
+          </div>
+        </div>{" "}
+        {/* ✅ FIXED: This div now correctly closes the header row only */}
+        {/* Loading state */}
+        {loading && (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-xl border border-[#e2ddd6] p-4 sm:p-5 animate-pulse"
+              >
+                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2" />
+                <div className="h-3 bg-gray-100 rounded w-1/2 mb-3" />
+                <div className="h-3 bg-gray-100 rounded w-1/3" />
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Empty state */}
+        {!loading && filtered.length === 0 && (
+          <div className="text-center py-12 text-[#9a9688]">
+            <p className="text-sm">Belum ada job yang dibuat</p>
+          </div>
+        )}
+        {/* Cards */}
+        {!loading && (
+          <div className="space-y-3">
+            {filtered.map((job) => (
+              <div
+                key={job.id}
+                className="relative bg-white rounded-xl border border-[#e2ddd6] p-4 sm:p-5 hover:shadow-sm transition"
+              >
+                {job.type === "Urgent" && (
+                  <div className="absolute top-3 right-3 bg-green-500 rounded-lg p-1.5">
+                    <Zap className="h-4 w-4 text-white fill-white" />
+                  </div>
+                )}
 
-              <p className="text-xs sm:text-sm text-[#5a5a4e] mb-2">
-                {job.pay}
-              </p>
+                <h2 className="text-sm sm:text-base font-bold text-[#2d2d25] mb-0.5">
+                  {job.title}
+                </h2>
 
-              <ul className="mb-3 space-y-0.5">
-                {job.tags.map((tag) => (
-                  <li
-                    key={tag}
-                    className="text-xs sm:text-sm text-[#5a5a4e] flex items-center gap-1.5"
-                  >
-                    <span className="h-1 w-1 rounded-full bg-[#5a5a4e]" />
-                    {tag}
-                  </li>
-                ))}
-              </ul>
+                {formatBudget(job.budgetMin, job.budgetMax, job.budgetType) && (
+                  <p className="text-xs sm:text-sm text-[#5a5a4e] mb-2">
+                    {formatBudget(job.budgetMin, job.budgetMax, job.budgetType)}
+                  </p>
+                )}
 
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-[#9a9688]">
-                  <span>upload at {job.date}</span>
-                  <span>·</span>
-                  <span className={`font-medium ${statusColor[job.status]}`}>
-                    {job.status}
-                    {job.applicants && (
-                      <span className="text-[#2d2d25]">
-                        {" "}
-                        {job.applicants} applicant
-                      </span>
-                    )}
-                  </span>
-                </div>
+                <ul className="mb-3 space-y-0.5">
+                  {job.jobCategories.map((cat) => (
+                    <li
+                      key={cat.jobCategoryId}
+                      className="text-xs sm:text-sm text-[#5a5a4e] flex items-center gap-1.5"
+                    >
+                      <span className="h-1 w-1 rounded-full bg-[#5a5a4e]" />
+                      {cat.name}
+                    </li>
+                  ))}
+                </ul>
 
-                <div className="flex gap-2">
-                  <button className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition">
-                    <Trash2 className="h-3 w-3" /> delete
-                  </button>
-                  <button className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-[#16A34A] hover:bg-[#3a6c3a] text-white text-xs font-medium transition">
-                    <Pencil className="h-3 w-3" /> edit
-                  </button>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-[#9a9688]">
+                    <span>upload at {formatDate(job.createdAt)}</span>
+                    <span>·</span>
+                    <span
+                      className={`font-medium ${statusColor[job.status] || "text-gray-500"}`}
+                    >
+                      {job.status}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDelete(job.id)}
+                      disabled={deletingId === job.id}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-medium transition"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      {deletingId === job.id ? "deleting..." : "delete"}
+                    </button>
+                    <button className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-[#16A34A] hover:bg-[#3a6c3a] text-white text-xs font-medium transition">
+                      <Pencil className="h-3 w-3" /> edit
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
