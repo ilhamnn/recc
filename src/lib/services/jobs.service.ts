@@ -24,6 +24,7 @@ export const searchJobs = async (params?: {
 
 export const getProviderJobs = async (params?: { page?: number; size?: number }) => {
   const res = await API.get("/api/jobs/provider", { params });
+  console.log(res.data);
   return res.data;
 };
 

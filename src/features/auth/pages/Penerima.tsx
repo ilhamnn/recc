@@ -4,18 +4,25 @@ import { Search, Trash2, Pencil, Zap, Plus } from "lucide-react";
 import Sidepenerima from "../components/sidebarpen";
 import { getProviderJobs, deleteJob } from "@/lib/services/jobs.service";
 
+// ─── Interfaces (matched to real API response) ────────────────────────────────
+
 interface JobCategory {
-  jobCategoryId: string;
+  id: string;
   name: string;
 }
 
+interface MasterLocations {
+  city?: { id: string; code: string; name: string };
+  district?: { id: string; code: string; name: string };
+  province?: { id: string; code: string; name: string };
+  subdistrict?: { id: string; code: string; name: string };
+}
+
 interface Location {
+  lat?: string;
+  lng?: string;
   street?: string;
-  postalCode?: string;
-  subdistrict?: { name: string };
-  district?: { name: string };
-  city?: { name: string };
-  province?: { name: string };
+  masterLocations?: MasterLocations;
 }
 
 interface Job {
@@ -23,7 +30,8 @@ interface Job {
   title: string;
   introduction?: string;
   isPublic: boolean;
-  location: Location;
+  isProvider: boolean;
+  locations: Location;
   type: string;
   jobSite: string;
   budgetMin?: number;
@@ -31,7 +39,7 @@ interface Job {
   budgetType?: string;
   status: string;
   jobAge?: string;
-  jobCategories: JobCategory[];
+  categories: JobCategory[];
   createdAt: string;
   updatedAt: string;
 }
@@ -50,11 +58,15 @@ interface Paging {
 interface ApiResponse {
   success: boolean;
   message: string;
-  data: Job[];
-  paging: Paging;
+  data: {
+    data: Job[];
+    paging: Paging;
+  };
 }
 
-const formatBudget = (min?: number, max?: number, type?: string) => {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const formatBudget = (min?: number, max?: number | null, type?: string) => {
   if (!min && !max) return null;
   const formatNum = (n: number) =>
     new Intl.NumberFormat("id-ID", {
@@ -63,10 +75,10 @@ const formatBudget = (min?: number, max?: number, type?: string) => {
       maximumFractionDigits: 0,
     }).format(n);
 
-  if (min && max)
-    return `${formatNum(min)} - ${formatNum(max)} per ${type?.toLowerCase() || "day"}`;
-  if (min) return `${formatNum(min)} per ${type?.toLowerCase() || "day"}`;
-  return `${formatNum(max!)} per ${type?.toLowerCase() || "day"}`;
+  const suffix = `per ${type?.toLowerCase() || "day"}`;
+  if (min && max) return `${formatNum(min)} - ${formatNum(max)} ${suffix}`;
+  if (min) return `${formatNum(min)} ${suffix}`;
+  return `${formatNum(max!)} ${suffix}`;
 };
 
 const formatDate = (dateStr: string) => {
@@ -78,12 +90,15 @@ const formatDate = (dateStr: string) => {
   });
 };
 
+// API returns capitalized status values e.g. "Open", "Closed"
 const statusColor: Record<string, string> = {
-  open: "text-green-600",
-  in_progress: "text-yellow-600",
-  canceled: "text-red-500",
-  closed: "text-gray-500",
+  Open: "text-green-600",
+  In_Progress: "text-yellow-600",
+  Canceled: "text-red-500",
+  Closed: "text-gray-500",
 };
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export const TawaranContent = () => {
   const navigate = useNavigate();
@@ -98,7 +113,8 @@ export const TawaranContent = () => {
         setLoading(true);
         const res: ApiResponse = await getProviderJobs({ page: 1, size: 20 });
         if (res.success) {
-          setJobs(res.data);
+          // API wraps jobs in res.data.data (double-nested)
+          setJobs(res.data.data);
         }
       } catch (err) {
         console.error("Failed to fetch jobs:", err);
@@ -140,7 +156,8 @@ export const TawaranContent = () => {
         <p className="text-xs text-[#9a9688] mb-3 sm:mb-4">
           home &gt; recipient
         </p>
-        {/* Header */} {/* ✅ FIXED: Removed duplicate h1 and wrapper div */}
+
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <h1 className="text-lg sm:text-xl font-bold text-[#2d2d25]">
             Job Tawaran Anda
@@ -165,8 +182,8 @@ export const TawaranContent = () => {
               <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-green-200" />
             </div>
           </div>
-        </div>{" "}
-        {/* ✅ FIXED: This div now correctly closes the header row only */}
+        </div>
+
         {/* Loading state */}
         {loading && (
           <div className="space-y-3">
@@ -182,14 +199,16 @@ export const TawaranContent = () => {
             ))}
           </div>
         )}
+
         {/* Empty state */}
         {!loading && filtered.length === 0 && (
           <div className="text-center py-12 text-[#9a9688]">
             <p className="text-sm">Belum ada job yang dibuat</p>
           </div>
         )}
+
         {/* Cards */}
-        {!loading && (
+        {!loading && filtered.length > 0 && (
           <div className="space-y-3">
             {filtered.map((job) => (
               <div
@@ -212,10 +231,11 @@ export const TawaranContent = () => {
                   </p>
                 )}
 
+                {/* Categories — now uses `categories` with `id` key */}
                 <ul className="mb-3 space-y-0.5">
-                  {job.jobCategories.map((cat) => (
+                  {job.categories.map((cat) => (
                     <li
-                      key={cat.jobCategoryId}
+                      key={cat.id}
                       className="text-xs sm:text-sm text-[#5a5a4e] flex items-center gap-1.5"
                     >
                       <span className="h-1 w-1 rounded-full bg-[#5a5a4e]" />
@@ -226,13 +246,17 @@ export const TawaranContent = () => {
 
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2 text-xs text-[#9a9688]">
-                    <span>upload at {formatDate(job.createdAt)}</span>
+                    {/* jobAge from API e.g. "2 Hari yang lalu" */}
+                    <span>{job.jobAge}</span>
                     <span>·</span>
+                    {/* status is capitalized from API e.g. "Open" */}
                     <span
-                      className={`font-medium ${statusColor[job.status] || "text-gray-500"}`}
+                      className={`font-medium ${statusColor[job.status] ?? "text-gray-500"}`}
                     >
                       {job.status}
                     </span>
+                    <span>·</span>
+                    <span>{job.jobSite}</span>
                   </div>
 
                   <div className="flex gap-2">
@@ -244,7 +268,10 @@ export const TawaranContent = () => {
                       <Trash2 className="h-3 w-3" />
                       {deletingId === job.id ? "deleting..." : "delete"}
                     </button>
-                    <button className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-[#16A34A] hover:bg-[#3a6c3a] text-white text-xs font-medium transition">
+                    <button
+                      onClick={() => navigate(`/r/edit/${job.id}`)}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-[#16A34A] hover:bg-[#3a6c3a] text-white text-xs font-medium transition"
+                    >
                       <Pencil className="h-3 w-3" /> edit
                     </button>
                   </div>
