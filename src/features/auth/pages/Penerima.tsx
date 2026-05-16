@@ -215,7 +215,7 @@ export const TawaranContent = () => {
                 key={job.id}
                 className="relative bg-white rounded-xl border border-[#e2ddd6] p-4 sm:p-5 hover:shadow-sm transition"
               >
-                {job.type === "Urgent" && (
+                {job.type === "urgent" && (
                   <div className="absolute top-3 right-3 bg-green-500 rounded-lg p-1.5">
                     <Zap className="h-4 w-4 text-white fill-white" />
                   </div>
