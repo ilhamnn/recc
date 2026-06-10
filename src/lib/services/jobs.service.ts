@@ -2,7 +2,8 @@ import { API } from "@/lib/api";
 
 // Jobs
 export const getJobs = async (params?: { page?: number; size?: number }) => {
-  const res = await API.get("/api/jobs", { params });
+  const res = await API.get("/public/api/jobs", { params });
+  console.log(res.data);
   return res.data;
 };
 
@@ -34,8 +35,19 @@ export const getJobDetail = async (jobId: string) => {
 };
 
 export const createJob = async (data: Record<string, any>) => {
-  const res = await API.post("/api/jobs", data);
-  return res.data;
+  try {
+    const res = await API.post("/api/jobs", data);
+
+    console.log("Create Job Response:", res.data);
+
+    return res.data;
+  } catch (error: any) {
+    console.log("Create Job Error Response:", error.response?.data);
+    console.log("Error Message:", error.response?.data?.message);
+    console.log("Validation Errors:", error.response?.data?.errors);
+
+    throw error;
+  }
 };
 
 export const updateJob = async (jobId: string, data: Record<string, any>) => {
